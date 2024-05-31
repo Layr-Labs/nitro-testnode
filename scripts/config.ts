@@ -164,6 +164,10 @@ function writeConfigs(argv: any) {
             "info-files": [chainInfoFile],
         },
         "node": {
+            "eigen-da": {
+                "enable": true,
+                "rpc": "disperser-holesky.eigenda.xyz:443"
+            },
             "staker": {
                 "dangerous": {
                     "without-block-validator": false
@@ -181,7 +185,8 @@ function writeConfigs(argv: any) {
             },
             "sequencer": false,
             "dangerous": {
-                "no-sequencer-coordinator": false
+                "no-sequencer-coordinator": false,
+                "disable-blob-reader": true,
             },
             "delayed-sequencer": {
                 "enable": false
