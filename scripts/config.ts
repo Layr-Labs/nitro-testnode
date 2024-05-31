@@ -164,6 +164,10 @@ function writeConfigs(argv: any) {
             "info-files": [chainInfoFile],
         },
         "node": {
+            "eigen-da": {
+                "enable": true,
+                "rpc": "disperser-holesky.eigenda.xyz:443"
+            },
             "staker": {
                 "dangerous": {
                     "without-block-validator": false
