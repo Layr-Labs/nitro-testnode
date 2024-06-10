@@ -348,6 +348,7 @@ function writeL2ChainConfig(argv: any) {
             "EnableArbOS": true,
             "AllowDebugPrecompiles": true,
             "DataAvailabilityCommittee": false,
+            "EigenDA": true,
             "InitialArbOSVersion": 11,
             "InitialChainOwner": argv.l2owner,
             "GenesisBlockNum": 0
@@ -381,6 +382,7 @@ function writeL3ChainConfig(argv: any) {
             "EnableArbOS": true,
             "AllowDebugPrecompiles": true,
             "DataAvailabilityCommittee": false,
+            "EigenDA": true,
             "InitialArbOSVersion": 11,
             "InitialChainOwner": "0x0000000000000000000000000000000000000000",
             "GenesisBlockNum": 0
