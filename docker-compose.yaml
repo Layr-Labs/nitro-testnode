@@ -67,7 +67,7 @@ services:
       - --authrpc.port=8551
       - --authrpc.addr=0.0.0.0
       - --http.vhosts=*
-      - --http.api=engine,personal,eth,net,web3
+      - --http.api=engine,personal,eth,net,web3,debug
       - --http.corsdomain=*
       - --ws
       - --ws.addr=0.0.0.0
@@ -336,6 +336,18 @@ services:
       - "tokenbridge-data:/workspace"
       - /var/run/docker.sock:/var/run/docker.sock
 
+  # eigenda-proxy:
+  #   container_name: eigenda-proxy
+  #   image: eigenda-proxy
+  #   environment:
+  #     - EIGENDA_PROXY_ADDR=0.0.0.0
+  #     - EIGENDA_PROXY_PORT=4242
+  #     - MEMSTORE_ENABLED=true
+  #     - MEMSTORE_EXPIRATION=2m
+  #     - EIGENDA_PROXY_TARGET_KZG_G1_PATH=../../../eigenlayer/eigenda-proxy/operator-setup/resources/g1.point
+  #   ports:
+  #     - 4242:4242
+# 
 volumes:
   l1data:
   consensus:

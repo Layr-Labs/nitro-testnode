@@ -166,7 +166,7 @@ function writeConfigs(argv: any) {
         "node": {
             "eigen-da": {
                 "enable": true,
-                "rpc": "disperser-holesky.eigenda.xyz:443"
+                "rpc": "http://host.docker.internal:5050"
             },
             "staker": {
                 "dangerous": {
