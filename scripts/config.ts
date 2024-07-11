@@ -166,7 +166,7 @@ function writeConfigs(argv: any) {
         "node": {
             "eigen-da": {
                 "enable": true,
-                "rpc": "http://host.docker.internal:5050"
+                "rpc": "http://eigenda_proxy:4242"
             },
             "staker": {
                 "dangerous": {
@@ -349,7 +349,7 @@ function writeL2ChainConfig(argv: any) {
             "AllowDebugPrecompiles": true,
             "DataAvailabilityCommittee": false,
             "InitialArbOSVersion": 30,
-            "EigenDA": false,
+            "EigenDA": true,
             "InitialChainOwner": argv.l2owner,
             "GenesisBlockNum": 0
         }
@@ -384,7 +384,7 @@ function writeL3ChainConfig(argv: any) {
             "DataAvailabilityCommittee": false,
             "InitialArbOSVersion": 30,
             "InitialChainOwner": argv.l2owner,
-            "EigenDA": false,
+            "EigenDA": true,
             "GenesisBlockNum": 0
         }
     }

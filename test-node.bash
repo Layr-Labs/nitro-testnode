@@ -216,7 +216,8 @@ if $dev_build_blockscout; then
   fi
 fi
 
-NODES="sequencer"
+NODES="eigenda_proxy"
+NODES="$NODES sequencer"
 INITIAL_SEQ_NODES="sequencer"
 
 if ! $simple; then
