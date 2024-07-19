@@ -9,7 +9,7 @@ RUN apt-get update && \
 WORKDIR /workspace
 # Clone the repository and checkout the specified branch
 RUN git clone --no-checkout https://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@github.com/layr-labs/nitro-contracts-private ./
-RUN git checkout a450cd9278f067b480671e5658804f029da38ea1
+RUN git checkout 81fa76a31bde7bc0286390ddc2ee3dce4af9f68f
 
 # ensure create-rollup-testnode command is in package.json
 RUN jq -e '.scripts["create-rollup-testnode"]' package.json > /dev/null || (echo "Error: 'create-rollup-testnode' not found in package.json" && exit 1)
