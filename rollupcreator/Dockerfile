@@ -8,7 +8,7 @@ RUN apt-get update && \
 # Create workspace
 WORKDIR /workspace
 # Clone the repository and checkout the specified branch
-RUN git clone --no-checkout https://layr-labs/nitro-contracts.git ./
+RUN git clone --no-checkout https://github.com/layr-labs/nitro-contracts.git ./
 RUN git checkout 81fa76a31bde7bc0286390ddc2ee3dce4af9f68f
 
 # Install Foundry
