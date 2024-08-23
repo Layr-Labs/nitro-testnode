@@ -9,7 +9,7 @@ RUN apt-get update && \
 WORKDIR /workspace
 # Clone the repository and checkout the specified branch
 RUN git clone --no-checkout https://github.com/layr-labs/nitro-contracts.git ./
-RUN git checkout 81fa76a31bde7bc0286390ddc2ee3dce4af9f68f
+RUN git checkout 6aed7ed34dc5bfdb10e2f16a60d063f00501d75d
 
 # Install Foundry
 RUN curl -L https://foundry.paradigm.xyz | bash
