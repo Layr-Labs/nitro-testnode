@@ -2,12 +2,12 @@
 
 set -e
 
-NITRO_NODE_VERSION=offchainlabs/nitro-node:v3.0.1-cf4b74e-dev
+NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro-eigenda:latest
 BLOCKSCOUT_VERSION=offchainlabs/blockscout:v1.0.0-c8db5b1
 
 # This commit matches the v1.2.1 contracts, with additional support for CacheManger deployment.
 # Once v1.2.2 is released, we can switch to that version.
-DEFAULT_NITRO_CONTRACTS_VERSION="a450cd9278f067b480671e5658804f029da38ea1"
+DEFAULT_NITRO_CONTRACTS_VERSION="39d274f4d95b4278d8c2ee54622631e8adce3ad6"
 DEFAULT_TOKEN_BRIDGE_VERSION="v1.2.1"
 
 # Set default versions if not overriden by provided env vars
@@ -53,8 +53,7 @@ batchposters=1
 devprivkey=b6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659
 l1chainid=1337
 simple=true
-prometheus=true
-grafana=true
+monitor=true
 while [[ $# -gt 0 ]]; do
     case $1 in
         --init)
@@ -174,15 +173,11 @@ while [[ $# -gt 0 ]]; do
             simple=false
             shift
             ;;
-        --prometheus)
+        --monitor)
             prometheus=true
-            shift
-            ;;
-        --grafana)
             grafana=true
             shift
             ;;
-
         *)
             echo Usage: $0 \[OPTIONS..]
             echo        $0 script [SCRIPT-ARGS]
@@ -205,8 +200,7 @@ while [[ $# -gt 0 ]]; do
             echo --no-tokenbridge  don\'t build or launch tokenbridge
             echo --no-run          does not launch nodes \(useful with build or init\)
             echo --no-simple       run a full configuration with separate sequencer/batch-poster/validator/relayer
-            echo --prometheus      start Prometheus server
-            echo --grafana         start Grafana server
+            echo --monitor         start Prometheus and Grafana server
             echo
             echo script runs inside a separate docker. For SCRIPT-ARGS, run $0 script --help
             exit 0
@@ -269,11 +263,8 @@ fi
 if $blockscout; then
     NODES="$NODES blockscout"
 fi
-if $prometheus; then
-    NODES="$NODES prometheus"
-fi
-if $grafana; then
-    NODES="$NODES grafana"
+if $monitor; then
+    NODES="$NODES prometheus grafana"
 fi
 if $force_build; then
   echo == Building..
@@ -401,8 +392,8 @@ if $force_init; then
 
     echo == Funding l2 funnel and dev key
     docker compose up --wait $INITIAL_SEQ_NODES
-    docker compose run scripts bridge-funds --ethamount 1000000000000000 --wait
-    docker compose run scripts send-l2 --ethamount 1000000000 --to l2owner --wait
+    docker compose run scripts bridge-funds --ethamount 100000 --wait
+    docker compose run scripts send-l2 --ethamount 100 --to l2owner --wait
 
     if $tokenbridge; then
         echo == Deploying L1-L2 token bridge

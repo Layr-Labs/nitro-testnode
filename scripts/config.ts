@@ -204,8 +204,8 @@ function writeConfigs(argv: any) {
             "batch-poster": {
                 "enable": false,
                 "redis-url": argv.redisUrl,
-                "max-delay": "15m",
-                "wait-for-max-delay": true,
+                "max-delay": "5m",
+                "wait-for-max-delay": false,
                 "max-eigenda-batch-size": 2_000_000, // 2MB
                 "l1-block-bound": "ignore",
                 "parent-chain-wallet" : {
