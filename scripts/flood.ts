@@ -60,8 +60,7 @@ async function simulateNetworkFlood(argv: any) {
   console.log(`start sending transactions`)
   // if throughput target is set, we will not respect the maxTxDataSize setting
   if (argv.targetThroughput > 0) {
-    argv.threads = argv.max_thread
-    const avg_tx_size = argv.targetThroughput / argv.max_threads;
+    const avg_tx_size = argv.targetThroughput / argv.threads;
     for (let i = 0; i < argv.rounds; i++) {
       argv.from = `user_${randomInRange(argv.user_count)}`;
       argv.to = `user_${randomInRange(argv.user_count)}`; // don't care if sending to self
@@ -79,7 +78,7 @@ async function simulateNetworkFlood(argv: any) {
     for (let i = 0; i < argv.rounds; i++) {
       argv.from = `user_${randomInRange(argv.user_count)}`;
       argv.to = `user_${randomInRange(argv.user_count)}`; // don't care if sending to self
-      argv.threads = randomInRange(argv.max_thread)
+      argv.threads = randomInRange(argv.threads)
       const size = randomInRange(argv.maxTxDataSize)
       argv.data = generateRandomHexData(size);
 
