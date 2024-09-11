@@ -58,13 +58,18 @@ async function simulateNetworkFlood(argv: any) {
   }
 
   console.log(`start sending transactions`)
+  argv.ethamount = "0.0001"
+  
+  // throughput / threads = avg tx size < 127size
   // if throughput target is set, we will not respect the maxTxDataSize setting
   if (argv.targetThroughput > 0) {
-    const avg_tx_size = argv.targetThroughput / argv.threads;
+    argv.delay = 1000 // 1 second delay
+    // We don't care about the float throughput, just send 1 more transaction of the same average size
+    argv.threads = argv.targetThroughput > 125_000 ? argv.targetThroughput / 125_000 + 1 : 1
+    const size = argv.targetThroughput / argv.threads
     for (let i = 0; i < argv.rounds; i++) {
       argv.from = `user_${randomInRange(argv.user_count)}`;
       argv.to = `user_${randomInRange(argv.user_count)}`; // don't care if sending to self
-      const size = randomInRange(avg_tx_size * 2)
       argv.data = generateRandomHexData(size);
 
       console.log(`prepared transactions`, { transaction_count: i, size: size, argv: argv })
@@ -87,7 +92,6 @@ async function simulateNetworkFlood(argv: any) {
     }
   }
 }
-
 
 export const floodCommand = {
   command: "flood",
