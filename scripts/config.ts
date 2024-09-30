@@ -206,7 +206,7 @@ function writeConfigs(argv: any) {
                 "redis-url": argv.redisUrl,
                 "max-delay": "15m",
                 "wait-for-max-delay": true,
-                "max-eigenda-batch-size": 2_000_000, // 2MB
+                "max-eigenda-batch-size": 16_000_000, // 16MB
                 "l1-block-bound": "ignore",
                 "parent-chain-wallet" : {
                     "account": namedAddress("sequencer"),
