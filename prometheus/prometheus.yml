@@ -10,13 +10,32 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
+  - job_name: 'eigenda_proxy'
+    honor_timestamps: true
+    metrics_path: /debug/metrics/prometheus
+    static_configs:
+      - targets: ["eigenda_proxy:7300"]
+
   - job_name: 'sequencer'
     honor_timestamps: true
     metrics_path: /debug/metrics/prometheus
-    # scheme: http
     static_configs:
       - targets: ["sequencer:6070"]
 
-  - job_name: "eigenda_proxy"
+  - job_name: 'poster'
+    honor_timestamps: true
+    metrics_path: /debug/metrics/prometheus
     static_configs:
-      - targets: ["eigenda-proxy:7300"]
+      - targets: ["poster:6070"]
+
+  - job_name: 'validator'
+    honor_timestamps: true
+    metrics_path: /debug/metrics/prometheus
+    static_configs:
+      - targets: ["validator:6070"]
+
+  - job_name: 'validation_node'
+    honor_timestamps: true
+    metrics_path: /debug/metrics/prometheus
+    static_configs:
+      - targets: ["validation_node:6070"]
