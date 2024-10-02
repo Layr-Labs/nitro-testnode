@@ -176,6 +176,8 @@ while [[ $# -gt 0 ]]; do
         --monitor)
             prometheus=true
             grafana=true
+            loki=true
+            promtail=true
             shift
             ;;
         *)
@@ -200,7 +202,7 @@ while [[ $# -gt 0 ]]; do
             echo --no-tokenbridge  don\'t build or launch tokenbridge
             echo --no-run          does not launch nodes \(useful with build or init\)
             echo --no-simple       run a full configuration with separate sequencer/batch-poster/validator/relayer
-            echo --monitor         start Prometheus and Grafana server
+            echo --monitor         start Prometheus, Loki, Promtail and Grafana server
             echo
             echo script runs inside a separate docker. For SCRIPT-ARGS, run $0 script --help
             exit 0
@@ -264,7 +266,7 @@ if $blockscout; then
     NODES="$NODES blockscout"
 fi
 if $monitor; then
-    NODES="$NODES prometheus grafana"
+    NODES="$NODES prometheus grafana loki promtail"
 fi
 if $force_build; then
   echo == Building..

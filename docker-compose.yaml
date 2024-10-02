@@ -412,6 +412,23 @@ services:
     depends_on:
       - prometheus
 
+  loki:
+    image: grafana/loki:3.1.1
+    restart: unless-stopped
+    volumes:
+      - ./loki:/etc/loki
+    ports:
+      - 3200:3200
+    command: -config.file=/etc/loki/config.yaml
+
+  promtail:
+    image: grafana/promtail:3.1.1
+    restart: unless-stopped
+    volumes:
+      - ./promtail:/etc/promtail
+      - /var/run/docker.sock:/var/run/docker.sock # Mount Docker socket to read container logs
+    command: -config.file=/etc/promtail/config.yaml
+
 volumes:
   l1data:
   consensus:
