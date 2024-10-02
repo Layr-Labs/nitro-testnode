@@ -2,7 +2,7 @@
 
 set -e
 
-NITRO_NODE_VERSION=offchainlabs/nitro-node:v3.0.1-cf4b74e-dev
+NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro-eigenda:latest
 BLOCKSCOUT_VERSION=offchainlabs/blockscout:v1.0.0-c8db5b1
 
 # This commit matches the v1.2.1 contracts, with additional support for CacheManger deployment.
@@ -53,6 +53,7 @@ batchposters=1
 devprivkey=b6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659
 l1chainid=1337
 simple=true
+monitor=true
 while [[ $# -gt 0 ]]; do
     case $1 in
         --init)
@@ -172,6 +173,11 @@ while [[ $# -gt 0 ]]; do
             simple=false
             shift
             ;;
+        --monitor)
+            prometheus=true
+            grafana=true
+            shift
+            ;;
         *)
             echo Usage: $0 \[OPTIONS..]
             echo        $0 script [SCRIPT-ARGS]
@@ -194,6 +200,7 @@ while [[ $# -gt 0 ]]; do
             echo --no-tokenbridge  don\'t build or launch tokenbridge
             echo --no-run          does not launch nodes \(useful with build or init\)
             echo --no-simple       run a full configuration with separate sequencer/batch-poster/validator/relayer
+            echo --monitor         start Prometheus and Grafana server
             echo
             echo script runs inside a separate docker. For SCRIPT-ARGS, run $0 script --help
             exit 0
@@ -255,6 +262,9 @@ if $l3node; then
 fi
 if $blockscout; then
     NODES="$NODES blockscout"
+fi
+if $monitor; then
+    NODES="$NODES prometheus grafana"
 fi
 if $force_build; then
   echo == Building..
