@@ -53,7 +53,7 @@ batchposters=1
 devprivkey=b6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659
 l1chainid=1337
 simple=true
-monitor=true
+monitor=false
 while [[ $# -gt 0 ]]; do
     case $1 in
         --init)
