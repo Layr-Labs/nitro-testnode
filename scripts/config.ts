@@ -205,7 +205,7 @@ function writeConfigs(argv: any) {
                 "enable": false,
                 "redis-url": argv.redisUrl,
                 "max-delay": "15m",
-                "wait-for-max-delay": true,
+                "wait-for-max-delay": false,
                 "max-eigenda-batch-size": 16_000_000, // 16MB
                 "l1-block-bound": "ignore",
                 "parent-chain-wallet" : {
