@@ -20,6 +20,7 @@ import {
   sendL3Command,
   sendRPCCommand,
 } from "./ethcommands";
+import { floodCommand } from "./flood";
 
 async function main() {
   await Yargs(hideBin(process.argv))
@@ -41,6 +42,7 @@ async function main() {
     .command(sendL2Command)
     .command(sendL3Command)
     .command(sendRPCCommand)
+    .command(floodCommand)
     .command(writeConfigCommand)
     .command(writeGethGenesisCommand)
     .command(writeL2ChainConfigCommand)

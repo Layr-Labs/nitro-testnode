@@ -244,6 +244,7 @@ function writeConfigs(argv: any) {
             "vhosts": "*",
             "corsdomain": "*"
         },
+        "metrics": true,
     }
 
 
@@ -322,6 +323,7 @@ function writeConfigs(argv: any) {
             "jwtsecret": valJwtSecret,
             "addr": "0.0.0.0",
         },
+        "metrics": true,
     }))
     fs.writeFileSync(path.join(consts.configpath, "validation_node_config.json"), JSON.stringify(validationNodeConfig))
 }
@@ -350,7 +352,7 @@ function writeL2ChainConfig(argv: any) {
             "EnableArbOS": true,
             "AllowDebugPrecompiles": true,
             "DataAvailabilityCommittee": false,
-            "InitialArbOSVersion": 30,
+            "InitialArbOSVersion": 32,
             "EigenDA": true,
             "InitialChainOwner": argv.l2owner,
             "GenesisBlockNum": 0
