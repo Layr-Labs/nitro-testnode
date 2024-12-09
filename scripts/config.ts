@@ -207,6 +207,7 @@ function writeConfigs(argv: any) {
                 "max-delay": "15m",
                 "wait-for-max-delay": false,
                 "max-eigenda-batch-size": 16_000_000, // 16MB
+                "enable-eigenda-failover": false,
                 "l1-block-bound": "ignore",
                 "parent-chain-wallet" : {
                     "account": namedAddress("sequencer"),
