@@ -2,7 +2,7 @@
 
 set -e
 
-NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro-eigenda:latest
+NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro-eigenda:eigenda-v3.2.1-linux-amd64
 BLOCKSCOUT_VERSION=offchainlabs/blockscout:v1.0.0-c8db5b1
 
 # This commit matches the v1.2.1 contracts, with additional support for CacheManger deployment.
