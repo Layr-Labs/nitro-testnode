@@ -8,6 +8,7 @@ on:
     push:
       branches:
         - master
+        - main
         - develop
   
 
@@ -34,4 +35,6 @@ jobs:
         restore-keys: ${{ runner.os }}-buildx-
           
     - name:  Startup Nitro testnode
-      run: ${{ github.workspace }}/.github/workflows/testnode.bash
+      env:
+        EIGENDA_SIGNER_PRIVATE_KEY: ${{ secrets.EIGENDA_SIGNER_PRIVATE_KEY }}
+      run: EIGENDA_SIGNER_PRIVATE_KEY=$EIGENDA_SIGNER_PRIVATE_KEY ${{ github.workspace }}/.github/workflows/testnode.bash
