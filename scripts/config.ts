@@ -204,7 +204,7 @@ function writeConfigs(argv: any) {
             "batch-poster": {
                 "enable": false,
                 "redis-url": argv.redisUrl,
-                "max-delay": "15m",
+                "max-delay": "10s",
                 "wait-for-max-delay": false,
                 "max-eigenda-batch-size": 16_000_000, // 16MB
                 "enable-eigenda-failover": false,
@@ -387,7 +387,7 @@ function writeL3ChainConfig(argv: any) {
             "EnableArbOS": true,
             "AllowDebugPrecompiles": true,
             "DataAvailabilityCommittee": false,
-            "InitialArbOSVersion": 30,
+            "InitialArbOSVersion": 32,
             "InitialChainOwner": argv.l2owner,
             "EigenDA": true,
             "GenesisBlockNum": 0
