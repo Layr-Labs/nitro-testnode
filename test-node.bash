@@ -53,6 +53,7 @@ batchposters=1
 devprivkey=b6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659
 l1chainid=1337
 simple=true
+eigenda=false
 monitor=false
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -173,6 +174,10 @@ while [[ $# -gt 0 ]]; do
             simple=false
             shift
             ;;
+        --eigenda)
+            eigenda=true
+            shift
+            ;;
         --monitor)
             prometheus=true
             grafana=true
@@ -202,6 +207,7 @@ while [[ $# -gt 0 ]]; do
             echo --no-tokenbridge  don\'t build or launch tokenbridge
             echo --no-run          does not launch nodes \(useful with build or init\)
             echo --no-simple       run a full configuration with separate sequencer/batch-poster/validator/relayer
+            echo --eigenda         run using EigenDA for data availability
             echo --monitor         start Prometheus, Loki, Promtail and Grafana server
             echo
             echo script runs inside a separate docker. For SCRIPT-ARGS, run $0 script --help
@@ -225,7 +231,10 @@ if $dev_build_blockscout; then
   fi
 fi
 
-NODES="eigenda_proxy"
+if $eigenda; then
+    NODES="eigenda_proxy"
+fi
+
 NODES="$NODES sequencer"
 INITIAL_SEQ_NODES="sequencer"
 
@@ -370,7 +379,7 @@ if $force_init; then
     l2ownerAddress=`docker compose run scripts print-address --account l2owner | tail -n 1 | tr -d '\r\n'`
 
     echo == Writing l2 chain config
-    docker compose run scripts --l2owner $l2ownerAddress  write-l2-chain-config
+    docker compose run scripts --l2owner $l2ownerAddress  write-l2-chain-config --eigenda $eigenda
 
     sequenceraddress=`docker compose run scripts print-address --account sequencer | tail -n 1 | tr -d '\r\n'`
     l2ownerKey=`docker compose run scripts print-private-key --account l2owner | tail -n 1 | tr -d '\r\n'`
@@ -382,10 +391,10 @@ if $force_init; then
 
     if $simple; then
         echo == Writing configs
-        docker compose run scripts write-config --simple
+        docker compose run scripts write-config --simple --eigenda $eigenda
     else
         echo == Writing configs
-        docker compose run scripts write-config
+        docker compose run scripts write-config --eigenda $eigenda
 
         echo == Initializing redis
         docker compose up --wait redis
@@ -430,7 +439,7 @@ if $force_init; then
         echo == Writing l3 chain config
         l3owneraddress=`docker compose run scripts print-address --account l3owner | tail -n 1 | tr -d '\r\n'`
         echo l3owneraddress $l3owneraddress
-        docker compose run scripts --l2owner $l3owneraddress  write-l3-chain-config
+        docker compose run scripts --l2owner $l3owneraddress  write-l3-chain-config --eigenda $eigenda
 
         if $l3_custom_fee_token; then
             echo == Deploying custom fee token
