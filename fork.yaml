@@ -9,7 +9,7 @@ base:
 fork:
   name: Layr-Labs/nitro-testnode
   url: https://github.com/Layr-Labs/nitro-testnode
-  hash: refs/heads/main
+  ref: refs/heads/main
 
 def:
     title: "Nitro Testnode Fork Diff"
