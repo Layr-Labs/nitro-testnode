@@ -7,7 +7,7 @@ on:
   push:
     branches:
       - main
-      - epociask--feat-fork-diff
+
 jobs:
   build:
     concurrency: ci-${{ github.ref }}
