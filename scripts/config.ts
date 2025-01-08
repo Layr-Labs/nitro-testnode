@@ -165,7 +165,7 @@ function writeConfigs(argv: any) {
         },
         "node": {
             "eigen-da": {
-                "enable": true,
+                "enable": false,
                 "rpc": "http://eigenda_proxy:4242"
             },
             "staker": {
@@ -248,6 +248,9 @@ function writeConfigs(argv: any) {
         "metrics": true,
     }
 
+    if (argv.eigenda) {
+        baseConfig.node["eigen-da"].enable = true
+    }
 
     const baseConfJSON = JSON.stringify(baseConfig)
 
@@ -264,6 +267,7 @@ function writeConfigs(argv: any) {
         simpleConfig.execution["sequencer"].enable = true
         fs.writeFileSync(path.join(consts.configpath, "sequencer_config.json"), JSON.stringify(simpleConfig))
     } else {
+        console.log("regular")
         let validatorConfig = JSON.parse(baseConfJSON)
         validatorConfig.node.staker.enable = true
         validatorConfig.node.staker["use-smart-contract-wallet"] = true
@@ -354,11 +358,16 @@ function writeL2ChainConfig(argv: any) {
             "AllowDebugPrecompiles": true,
             "DataAvailabilityCommittee": false,
             "InitialArbOSVersion": 32,
-            "EigenDA": true,
+            "EigenDA": false,
             "InitialChainOwner": argv.l2owner,
             "GenesisBlockNum": 0
         }
     }
+
+    if (argv.eigenda) {
+        l2ChainConfig.arbitrum.EigenDA = true
+    }
+
     const l2ChainConfigJSON = JSON.stringify(l2ChainConfig)
     fs.writeFileSync(path.join(consts.configpath, "l2_chain_config.json"), l2ChainConfigJSON)
 }
@@ -389,10 +398,15 @@ function writeL3ChainConfig(argv: any) {
             "DataAvailabilityCommittee": false,
             "InitialArbOSVersion": 32,
             "InitialChainOwner": argv.l2owner,
-            "EigenDA": true,
+            "EigenDA": false,
             "GenesisBlockNum": 0
         }
     }
+
+    if (argv.eigenda) {
+        l3ChainConfig.arbitrum.EigenDA = true
+    }
+
     const l3ChainConfigJSON = JSON.stringify(l3ChainConfig)
     fs.writeFileSync(path.join(consts.configpath, "l3_chain_config.json"), l3ChainConfigJSON)
 }
@@ -406,8 +420,14 @@ export const writeConfigCommand = {
           describe: "simple config (sequencer is also poster, validator)",
           default: false,
         },
-      },    
-    handler: (argv: any) => {
+        eigenda:{
+            boolean: true,
+            default: false,
+            describe: "config with EigenDA enabled",
+            },
+        },
+
+        handler: (argv: any) => {
         writeConfigs(argv)
     }
 }
@@ -431,6 +451,13 @@ export const writeGethGenesisCommand = {
 export const writeL2ChainConfigCommand = {
     command: "write-l2-chain-config",
     describe: "writes l2 chain config file",
+    builder: {
+        eigenda:{
+            boolean: true,
+            default: false,
+            describe: "config with EigenDA enabled",
+        },
+    },
     handler: (argv: any) => {
         writeL2ChainConfig(argv)
     }
@@ -439,6 +466,13 @@ export const writeL2ChainConfigCommand = {
 export const writeL3ChainConfigCommand = {
     command: "write-l3-chain-config",
     describe: "writes l3 chain config file",
+    builder: {
+        eigenda:{
+            boolean: true,
+            default: false,
+            describe: "config with EigenDA enabled",
+        },
+    },
     handler: (argv: any) => {
         writeL3ChainConfig(argv)
     }
