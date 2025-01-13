@@ -38,4 +38,6 @@ jobs:
           restore-keys: ${{ runner.os }}-buildx-
 
       - name: Startup Nitro testnode
-        run: ${{ github.workspace }}/.github/workflows/testnode.bash --init-force ${{ (matrix.l3node == 'l3node' && '--l3node') || (matrix.l3node == 'l3node-token-6' && '--l3node --l3-fee-token --l3-token-bridge --l3-fee-token-decimals 6') || '' }} ${{ matrix.tokenbridge == 'tokenbridge' && '--tokenbridge' || '--no-tokenbridge' }} --no-simple --detach ${{ matrix.pos == 'pos' && '--pos' || '' }}
+        env:
+          EIGENDA_SIGNER_PRIVATE_KEY: ${{ secrets.EIGENDA_SIGNER_PRIVATE_KEY }}
+        run: EIGENDA_SIGNER_PRIVATE_KEY=$EIGENDA_SIGNER_PRIVATE_KEY ${{ github.workspace }}/.github/workflows/testnode.bash --init-force ${{ (matrix.l3node == 'l3node' && '--l3node') || (matrix.l3node == 'l3node-token-6' && '--l3node --l3-fee-token --l3-token-bridge --l3-fee-token-decimals 6') || '' }} ${{ matrix.tokenbridge == 'tokenbridge' && '--tokenbridge' || '--no-tokenbridge' }} --no-simple --detach ${{ matrix.pos == 'pos' && '--pos' || '' }}

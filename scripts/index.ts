@@ -23,6 +23,7 @@ import {
   waitForSyncCommand,
   transferL3ChainOwnershipCommand,
 } from "./ethcommands";
+import { floodCommand } from "./flood";
 
 async function main() {
   await Yargs(hideBin(process.argv))
@@ -47,6 +48,7 @@ async function main() {
     .command(sendRPCCommand)
     .command(setValidKeysetCommand)
     .command(transferL3ChainOwnershipCommand)
+    .command(floodCommand)
     .command(writeConfigCommand)
     .command(writeGethGenesisCommand)
     .command(writeL2ChainConfigCommand)

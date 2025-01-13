@@ -1,0 +1,78 @@
+title: "layr-labs/nitro-testnode"  # Define the HTML page title
+logo: "logo.png"
+footer: |  # define the footer with markdown
+  [Nitro Testnode](https://github.com/Layr-Labs/nitro-testnode) fork overview &middot created with [Forkdiff](https://github.com/protolambda/forkdiff)
+base:
+  name: OffchainLabs/nitro-testnode
+  url: https://github.com/OffchainLabs/nitro-testnode
+  hash:  f328006579cbefe22c6c57de3d6b86397fde4438
+fork:
+  name: Layr-Labs/nitro-testnode
+  url: https://github.com/Layr-Labs/nitro-testnode
+  ref: refs/heads/main
+
+def:
+    title: "Nitro Testnode Fork Diff"
+    description: | # description in markdown
+      The original nitro codebase can be found at [`github.com/OffchainLabs/nitro-testnode`](https://github.com/OffchainLabs/nitro).
+      And the fork at [`github.com/Layr-Labs/nitro-testnode`](https://github.com/Layr-Labs/nitro).
+
+    sub:
+
+      - title: "EigenDA Support"
+        description: |
+          Added support for EigenDA:
+          
+          - Updated config generation script to express EigenDA chain params
+
+          - Updated rollup creator deployment script to target `layr-labs/nitro-contracts`
+
+          - Updated core docker compose to wire EigenDA proxy dependency
+
+        globs:
+          - "scripts/config.ts"
+          - "rollupcreator/Dockerfile"
+          - "docker-compose.yaml"
+
+      - title: "Observability"
+        description: | 
+          Added optional observability to the testnode environment:
+          
+          -  Prometheus agent for collecting service metrics
+
+          - Loki for log collecting 
+
+          -  PProf on sequencer resources to capture key performance metrics
+
+          - Grafana dashboard to capture key throughput and reliability metrics 
+
+          Observability can be enabled by passing `--monitor` to the root level `test-node.bash` script.
+
+        globs:
+          - "loki/**"
+          - "grafana/**"
+          - "prometheus/**"
+          - "promtail/**"
+          - "test-node.bash"
+
+      - title: "Throughput Testing"
+        description: |
+          Added a `flood.ts` script which generates tx traffic targeting a specific byte rate.
+          
+          E.g:
+          ```
+            docker compose run scripts flood --serial true --rounds 1000 --targetThroughput 100_000
+          ```
+
+          This will target 100,000 Kb/s. 
+
+        globs:
+          - "scripts/index.ts"
+          - "scripts/flood.ts"
+
+
+
+
+
+ignore:
+  - "grafana/dashboards/Throughput-testing.json"

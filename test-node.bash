@@ -2,11 +2,12 @@
 
 set -eu
 
-NITRO_NODE_VERSION=offchainlabs/nitro-node:v3.2.1-d81324d-dev
+NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro-eigenda:eigenda-v3.2.1-linux-amd64
 BLOCKSCOUT_VERSION=offchainlabs/blockscout:v1.1.0-0e716c8
 
-# This commit matches v2.1.0 release of nitro-contracts, with additional support to set arb owner through upgrade executor
-DEFAULT_NITRO_CONTRACTS_VERSION="99c07a7db2fcce75b751c5a2bd4936e898cda065"
+# This commit matches the v1.2.1 contracts, with additional support for CacheManger deployment.
+# Once v1.2.2 is released, we can switch to that version.
+DEFAULT_NITRO_CONTRACTS_VERSION="85aa27d11776bcbadf7f09aebdf71562bcb76e51"
 DEFAULT_TOKEN_BRIDGE_VERSION="v1.2.2"
 
 # Set default versions if not overriden by provided env vars
@@ -63,6 +64,8 @@ build_utils=false
 force_build_utils=false
 build_node_images=false
 
+eigenda=false
+monitor=false
 while [[ $# -gt 0 ]]; do
     case $1 in
         --init)
@@ -245,6 +248,17 @@ while [[ $# -gt 0 ]]; do
             simple=false
             shift
             ;;
+        --eigenda)
+            eigenda=true
+            shift
+            ;;
+        --monitor)
+            prometheus=true
+            grafana=true
+            loki=true
+            promtail=true
+            shift
+            ;;
         *)
             echo Usage: $0 \[OPTIONS..]
             echo        $0 script [SCRIPT-ARGS]
@@ -277,11 +291,18 @@ while [[ $# -gt 0 ]]; do
             echo --build-utils         rebuild scripts, rollupcreator, token bridge docker images
             echo --no-build-utils      don\'t rebuild scripts, rollupcreator, token bridge docker images
             echo --force-build-utils   force rebuilding utils, useful if NITRO_CONTRACTS_ or TOKEN_BRIDGE_BRANCH changes
+            echo --eigenda         run using EigenDA for data availability
+            echo --monitor         start Prometheus, Loki, Promtail and Grafana server
             echo
             echo script runs inside a separate docker. For SCRIPT-ARGS, run $0 script --help
             exit 0
     esac
 done
+
+if $force_init; then
+  force_build=true
+fi
+
 
 NODES="sequencer"
 INITIAL_SEQ_NODES="sequencer"
@@ -321,6 +342,14 @@ if $l3node; then
 fi
 if $blockscout; then
     NODES="$NODES blockscout"
+fi
+
+if $eigenda; then
+    NODES="eigenda_proxy"
+fi
+
+if $monitor; then
+    NODES="$NODES prometheus grafana loki promtail"
 fi
 
 if $dev_nitro && $build_dev_nitro; then
@@ -435,7 +464,7 @@ if $force_init; then
         docker compose run scripts --l2owner $l2ownerAddress  write-l2-chain-config --anytrust
     else
         echo == Writing l2 chain config
-        docker compose run scripts --l2owner $l2ownerAddress  write-l2-chain-config
+        docker compose run scripts --l2owner $l2ownerAddress  write-l2-chain-config --eigenda $eigenda
     fi
 
     sequenceraddress=`docker compose run scripts print-address --account sequencer | tail -n 1 | tr -d '\r\n'`
@@ -480,10 +509,10 @@ fi
 if $force_init; then
     if $simple; then
         echo == Writing configs
-        docker compose run scripts write-config --simple $anytrustNodeConfigLine
+        docker compose run scripts write-config --simple $anytrustNodeConfigLine --eigenda $eigenda
     else
         echo == Writing configs
-        docker compose run scripts write-config $anytrustNodeConfigLine
+        docker compose run scripts write-config $anytrustNodeConfigLine --eigenda $eigenda
 
         echo == Initializing redis
         docker compose up --wait redis
@@ -528,7 +557,7 @@ if $force_init; then
         echo == Writing l3 chain config
         l3owneraddress=`docker compose run scripts print-address --account l3owner | tail -n 1 | tr -d '\r\n'`
         echo l3owneraddress $l3owneraddress
-        docker compose run scripts --l2owner $l3owneraddress  write-l3-chain-config
+        docker compose run scripts --l2owner $l3owneraddress  write-l3-chain-config --eigenda $eigenda
 
         EXTRA_L3_DEPLOY_FLAG=""
         if $l3_custom_fee_token; then

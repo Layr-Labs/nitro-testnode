@@ -187,6 +187,10 @@ function writeConfigs(argv: any) {
             "info-files": [chainInfoFile],
         },
         "node": {
+            "eigen-da": {
+                "enable": false,
+                "rpc": "http://eigenda_proxy:4242"
+            },
             "staker": {
                 "dangerous": {
                     "without-block-validator": false
@@ -223,7 +227,10 @@ function writeConfigs(argv: any) {
             "batch-poster": {
                 "enable": false,
                 "redis-url": argv.redisUrl,
-                "max-delay": "30s",
+                "max-delay": "10s",
+                "wait-for-max-delay": false,
+                "max-eigenda-batch-size": 16_000_000, // 16MB
+                "enable-eigenda-failover": false,
                 "l1-block-bound": "ignore",
                 "parent-chain-wallet" : {
                     "account": namedAddress("sequencer"),
@@ -272,9 +279,13 @@ function writeConfigs(argv: any) {
             "vhosts": "*",
             "corsdomain": "*"
         },
+        "metrics": true,
     }
 
     baseConfig.node["data-availability"]["sequencer-inbox-address"] = ethers.utils.hexlify(getChainInfo()[0]["rollup"]["sequencer-inbox"]);
+    if (argv.eigenda) {
+        baseConfig.node["eigen-da"].enable = true
+    }
 
     const baseConfJSON = JSON.stringify(baseConfig)
 
@@ -294,6 +305,7 @@ function writeConfigs(argv: any) {
         }
         fs.writeFileSync(path.join(consts.configpath, "sequencer_config.json"), JSON.stringify(simpleConfig))
     } else {
+
         let validatorConfig = JSON.parse(baseConfJSON)
         validatorConfig.node.staker.enable = true
         validatorConfig.node.staker["use-smart-contract-wallet"] = true
@@ -357,6 +369,7 @@ function writeConfigs(argv: any) {
             "jwtsecret": valJwtSecret,
             "addr": "0.0.0.0",
         },
+        "metrics": true,
     }))
     fs.writeFileSync(path.join(consts.configpath, "validation_node_config.json"), JSON.stringify(validationNodeConfig))
 }
@@ -386,10 +399,16 @@ function writeL2ChainConfig(argv: any) {
             "AllowDebugPrecompiles": true,
             "DataAvailabilityCommittee": argv.anytrust,
             "InitialArbOSVersion": 32,
+            "EigenDA": false,
             "InitialChainOwner": argv.l2owner,
             "GenesisBlockNum": 0
         }
     }
+
+    if (argv.eigenda) {
+        l2ChainConfig.arbitrum.EigenDA = true
+    }
+
     const l2ChainConfigJSON = JSON.stringify(l2ChainConfig)
     fs.writeFileSync(path.join(consts.configpath, "l2_chain_config.json"), l2ChainConfigJSON)
 }
@@ -418,11 +437,17 @@ function writeL3ChainConfig(argv: any) {
             "EnableArbOS": true,
             "AllowDebugPrecompiles": true,
             "DataAvailabilityCommittee": false,
-            "InitialArbOSVersion": 31,
+            "InitialArbOSVersion": 32,
             "InitialChainOwner": argv.l2owner,
+            "EigenDA": false,
             "GenesisBlockNum": 0
         }
     }
+
+    if (argv.eigenda) {
+        l3ChainConfig.arbitrum.EigenDA = true
+    }
+
     const l3ChainConfigJSON = JSON.stringify(l3ChainConfig)
     fs.writeFileSync(path.join(consts.configpath, "l3_chain_config.json"), l3ChainConfigJSON)
 }
@@ -538,7 +563,11 @@ export const writeConfigCommand = {
             describe: "DAS committee member B BLS pub key",
             default: ""
         },
-
+        eigenda: {
+            boolean: true,
+            default: false,
+            describe: "config with EigenDA enabled",
+        },
       },
     handler: (argv: any) => {
         writeConfigs(argv)
@@ -570,6 +599,11 @@ export const writeL2ChainConfigCommand = {
             describe: "enable anytrust in chainconfig",
             default: false
         },
+        eigenda:{
+            boolean: true,
+            default: false,
+            describe: "config with EigenDA enabled",
+        },
     },
     handler: (argv: any) => {
         writeL2ChainConfig(argv)
@@ -579,6 +613,13 @@ export const writeL2ChainConfigCommand = {
 export const writeL3ChainConfigCommand = {
     command: "write-l3-chain-config",
     describe: "writes l3 chain config file",
+    builder: {
+        eigenda:{
+            boolean: true,
+            default: false,
+            describe: "config with EigenDA enabled",
+        },
+    },
     handler: (argv: any) => {
         writeL3ChainConfig(argv)
     }
