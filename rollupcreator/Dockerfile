@@ -1,7 +1,5 @@
 FROM node:18-bullseye-slim
-
-
-# Install necessary packages
+ARG NITRO_CONTRACTS_BRANCH=main
 RUN apt-get update && \
     apt-get install -y git docker.io python3 build-essential curl jq
 

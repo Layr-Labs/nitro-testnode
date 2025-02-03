@@ -47,7 +47,7 @@ services:
       - "127.0.0.1:6379:6379"
 
   geth:
-    image: ethereum/client-go:v1.10.23
+    image: ethereum/client-go:latest
     ports:
       - "127.0.0.1:8545:8545"
       - "127.0.0.1:8551:8551"
@@ -77,6 +77,7 @@ services:
       - --authrpc.jwtsecret=/config/jwt.hex
       - --nodiscover
       - --syncmode=full
+      - --state.scheme=hash
       - --dev
       - --dev.period=1
       - --mine
@@ -91,9 +92,13 @@ services:
     command:
       - testnet
       - generate-genesis
+      - --fork=deneb
       - --num-validators=64
+      - --genesis-time-delay=15
       - --output-ssz=/consensus/genesis.ssz
       - --chain-config-file=/config/prysm.yaml
+      - --geth-genesis-json-in=/config/geth_genesis.json
+      - --geth-genesis-json-out=/config/geth_genesis.json
     volumes:
       - "consensus:/consensus"
       - "config:/config"
@@ -108,16 +113,17 @@ services:
       - --datadir=/consensus/beacondata
       - --rpc-port=5000
       - --min-sync-peers=0
-      - --interop-genesis-state=/consensus/genesis.ssz
+      - --genesis-state=/consensus/genesis.ssz
       - --interop-eth1data-votes
       - --bootstrap-node=
       - --chain-config-file=/config/prysm.yaml
       - --rpc-host=0.0.0.0
       - --grpc-gateway-host=0.0.0.0
-      - --chain-id=32382
+      - --chain-id=1337
       - --execution-endpoint=http://geth:8551
       - --accept-terms-of-use
       - --jwt-secret=/config/jwt.hex
+      - --suggested-fee-recipient=0x000000000000000000000000000000000000dEaD
     depends_on:
       geth:
         condition: service_started
@@ -423,6 +429,53 @@ services:
       - ./promtail:/etc/promtail
       - /var/run/docker.sock:/var/run/docker.sock # Mount Docker socket to read container logs
     command: -config.file=/etc/promtail/config.yaml
+  datool:
+    image: nitro-node-dev-testnode
+    entrypoint: /usr/local/bin/datool
+    volumes:
+      - "config:/config"
+      - "das-committee-a-data:/das-committee-a"
+      - "das-committee-b-data:/das-committee-b"
+      - "das-mirror-data:/das-mirror"
+    command:
+
+  das-committee-a:
+    pid: host # allow debugging
+    image: nitro-node-dev-testnode
+    entrypoint: /usr/local/bin/daserver
+    ports:
+      - "127.0.0.1:9876:9876"
+      - "127.0.0.1:9877:9877"
+    volumes:
+      - "config:/config"
+      - "das-committee-a-data:/das"
+    command:
+      - --conf.file=/config/l2_das_committee.json
+
+  das-committee-b:
+    pid: host # allow debugging
+    image: nitro-node-dev-testnode
+    entrypoint: /usr/local/bin/daserver
+    ports:
+      - "127.0.0.1:8876:9876"
+      - "127.0.0.1:8877:9877"
+    volumes:
+      - "config:/config"
+      - "das-committee-b-data:/das"
+    command:
+      - --conf.file=/config/l2_das_committee.json
+
+  das-mirror:
+    pid: host # allow debugging
+    image: nitro-node-dev-testnode
+    entrypoint: /usr/local/bin/daserver
+    ports:
+      - "127.0.0.1:7877:9877"
+    volumes:
+      - "config:/config"
+      - "das-mirror-data:/das"
+    command:
+      - --conf.file=/config/l2_das_mirror.json
 
 volumes:
   l1data:
@@ -441,3 +494,6 @@ volumes:
   config:
   postgres-data:
   tokenbridge-data:
+  das-committee-a-data:
+  das-committee-b-data:
+  das-mirror-data:
