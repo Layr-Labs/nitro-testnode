@@ -2,7 +2,13 @@
 
 set -eu
 
-NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro-eigenda:eigenda-v3.2.1-linux-amd64
+## EigenDA v3.5.0
+NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro/nitro-node@sha256:f5d384b1fe33fbe6219cba6e223669097cd4f263a945adb3949ccd55d255e43d
+
+## Arbitrum v3.5.0
+# NITRO_NODE_VERSION=offchainlabs/nitro-node:v3.5.0-bdc2fd2
+## EigenDA v3.2.1
+# NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro-eigenda@sha256:1d74080bb6627a092ad6ebf63be2ba8a9b0677417de6fa9d281724cc78db634d
 BLOCKSCOUT_VERSION=offchainlabs/blockscout:v1.0.0-c8db5b1
 
 # This commit matches the v1.2.1 contracts, with additional support for CacheManger deployment.
@@ -102,7 +108,7 @@ while [[ $# -gt 0 ]]; do
             shift
             if [[ $# -eq 0 || $1 == -* ]]; then
                 # If no argument after --dev, set both flags to true
-                dev_nitro=true
+                dev_nitro=false
                 build_dev_nitro=true
                 dev_blockscout=true
                 build_dev_blockscout=true
@@ -376,7 +382,7 @@ if $dev_nitro && $build_dev_nitro; then
       echo execute from a sub-directory of nitro or use NITRO_SRC environment variable
       exit 1
   fi
-  docker build "$NITRO_SRC" -t nitro-node-dev --target nitro-node-dev
+  docker build "$NITRO_SRC" -t nitro-node-dev --target nitro-node
 fi
 if $dev_blockscout && $build_dev_blockscout; then
   if $blockscout; then
