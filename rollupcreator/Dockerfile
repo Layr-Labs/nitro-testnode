@@ -8,7 +8,7 @@ RUN git checkout 85aa27d11776bcbadf7f09aebdf71562bcb76e51
 RUN yarn install && yarn cache clean
 RUN curl -L https://foundry.paradigm.xyz | bash
 ENV PATH="${PATH}:/root/.foundry/bin"
-RUN foundryup
+RUN foundryup --install 1.0.0
 
 # Setup scripts and dependencies
 RUN touch scripts/config.ts
