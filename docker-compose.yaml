@@ -47,7 +47,7 @@ services:
       - "127.0.0.1:6379:6379"
 
   geth:
-    image: ethereum/client-go:v1.10.23
+    image: ethereum/client-go:stable
     ports:
       - "127.0.0.1:8545:8545"
       - "127.0.0.1:8551:8551"
@@ -77,6 +77,7 @@ services:
       - --authrpc.jwtsecret=/config/jwt.hex
       - --nodiscover
       - --syncmode=full
+      - --state.scheme=hash
       - --dev
       - --dev.period=1
       - --mine
@@ -91,9 +92,12 @@ services:
     command:
       - testnet
       - generate-genesis
+      - --fork=deneb
       - --num-validators=64
+      - --genesis-time-delay=15
       - --output-ssz=/consensus/genesis.ssz
       - --chain-config-file=/config/prysm.yaml
+      - --geth-genesis-json-in=/config/geth_genesis.json
     volumes:
       - "consensus:/consensus"
       - "config:/config"
@@ -108,16 +112,17 @@ services:
       - --datadir=/consensus/beacondata
       - --rpc-port=5000
       - --min-sync-peers=0
-      - --interop-genesis-state=/consensus/genesis.ssz
+      - --genesis-state=/consensus/genesis.ssz
       - --interop-eth1data-votes
       - --bootstrap-node=
       - --chain-config-file=/config/prysm.yaml
       - --rpc-host=0.0.0.0
       - --grpc-gateway-host=0.0.0.0
-      - --chain-id=32382
+      - --chain-id=1337
       - --execution-endpoint=http://geth:8551
       - --accept-terms-of-use
       - --jwt-secret=/config/jwt.hex
+      - --suggested-fee-recipient=0x000000000000000000000000000000000000dEaD
     depends_on:
       geth:
         condition: service_started
@@ -161,7 +166,19 @@ services:
       - "l1keystore:/home/user/l1keystore"
       - "config:/config"
       - "tokenbridge-data:/tokenbridge-data"
-    command: --conf.file /config/sequencer_config.json --node.feed.output.enable --node.feed.output.port 9642  --http.api net,web3,eth,txpool,debug --node.seq-coordinator.my-url  ws://sequencer:8548 --graphql.enable --graphql.vhosts * --graphql.corsdomain --metrics --pprof --metrics-server.addr 0.0.0.0 --pprof-cfg.addr 0.0.0.0
+    command:
+      - --conf.file=/config/sequencer_config.json
+      - --node.feed.output.enable
+      - --node.feed.output.port=9642
+      - --http.api=net,web3,eth,txpool,debug,timeboost,auctioneer
+      - --node.seq-coordinator.my-url=http://sequencer:8547
+      - --graphql.enable
+      - --graphql.vhosts=*
+      - --graphql.corsdomain=*
+      - --metrics
+      - --pprof
+      - --metrics-server.addr 0.0.0.0
+      - --pprof-cfg.addr 0.0.0.0
     depends_on:
       - geth
 
@@ -175,7 +192,14 @@ services:
     volumes:
       - "seqdata_b:/home/user/.arbitrum/local/nitro"
       - "config:/config"
-    command: --conf.file /config/sequencer_config.json --node.seq-coordinator.my-url ws://sequencer_b:8548 --metrics --pprof --metrics-server.addr 0.0.0.0 --pprof-cfg.addr 0.0.0.0
+    command:
+      - --conf.file=/config/sequencer_config.json
+      - --node.seq-coordinator.my-url=http://sequencer_b:8547
+      - --http.api=net,web3,eth,txpool,debug,timeboost,auctioneer
+      - --metrics
+      - --pprof
+      - --metrics-server.addr 0.0.0.0
+      - --pprof-cfg.addr 0.0.0.0
     depends_on:
       - geth
       - redis
@@ -190,7 +214,14 @@ services:
     volumes:
       - "seqdata_c:/home/user/.arbitrum/local/nitro"
       - "config:/config"
-    command: --conf.file /config/sequencer_config.json --node.seq-coordinator.my-url ws://sequencer_c:8548 --metrics --pprof --metrics-server.addr 0.0.0.0 --pprof-cfg.addr 0.0.0.0
+    command:
+      - --conf.file=/config/sequencer_config.json
+      - --node.seq-coordinator.my-url=http://sequencer_c:8547
+      - --http.api=net,web3,eth,txpool,debug,timeboost,auctioneer
+      - --metrics
+      - --pprof
+      - --metrics-server.addr 0.0.0.0
+      - --pprof-cfg.addr 0.0.0.0
     depends_on:
       - geth
       - redis
@@ -205,7 +236,14 @@ services:
     volumes:
       - "seqdata_d:/home/user/.arbitrum/local/nitro"
       - "config:/config"
-    command: --conf.file /config/sequencer_config.json --node.seq-coordinator.my-url ws://sequencer_d:8548 --metrics --pprof --metrics-server.addr 0.0.0.0 --pprof-cfg.addr 0.0.0.0
+    command:
+      - --conf.file=/config/sequencer_config.json
+      - --node.seq-coordinator.my-url=http://sequencer_d:8547
+      - --http.api=net,web3,eth,txpool,debug,timeboost,auctioneer
+      - --metrics
+      - --pprof
+      - --metrics-server.addr 0.0.0.0
+      - --pprof-cfg.addr 0.0.0.0
     depends_on:
       - geth
       - redis
@@ -348,6 +386,26 @@ services:
       - "tokenbridge-data:/workspace"
       - /var/run/docker.sock:/var/run/docker.sock
 
+  boldupgrader:
+    depends_on:
+      - geth
+      - sequencer
+    pid: host
+    build:
+      context: boldupgrader/
+      args:
+        BOLD_CONTRACTS_BRANCH: ${BOLD_CONTRACTS_BRANCH:-}
+    environment:
+      - L1_RPC_URL=http://geth:8545
+      - L1_PRIV_KEY=0xdc04c5399f82306ec4b4d654a342f40e2e0620fe39950d967e1e574b32d4dd36
+      - CONFIG_NETWORK_NAME=local
+      - DEPLOYED_CONTRACTS_DIR=./scripts/files/
+      - DISABLE_VERIFICATION=true
+    volumes:
+      - "config:/config"
+      - "boldupgrader-data:/workspace"
+      - /var/run/docker.sock:/var/run/docker.sock
+
   rollupcreator:
     depends_on:
       - geth
@@ -360,6 +418,85 @@ services:
     volumes:
       - "config:/config"
       - /var/run/docker.sock:/var/run/docker.sock
+
+  datool:
+    image: nitro-node-dev-testnode
+    entrypoint: /usr/local/bin/datool
+    volumes:
+      - "config:/config"
+      - "das-committee-a-data:/das-committee-a"
+      - "das-committee-b-data:/das-committee-b"
+      - "das-mirror-data:/das-mirror"
+    command:
+
+  das-committee-a:
+    pid: host # allow debugging
+    image: nitro-node-dev-testnode
+    entrypoint: /usr/local/bin/daserver
+    ports:
+      - "127.0.0.1:9876:9876"
+      - "127.0.0.1:9877:9877"
+    volumes:
+      - "config:/config"
+      - "das-committee-a-data:/das"
+    command:
+      - --conf.file=/config/l2_das_committee.json
+
+  das-committee-b:
+    pid: host # allow debugging
+    image: nitro-node-dev-testnode
+    entrypoint: /usr/local/bin/daserver
+    ports:
+      - "127.0.0.1:8876:9876"
+      - "127.0.0.1:8877:9877"
+    volumes:
+      - "config:/config"
+      - "das-committee-b-data:/das"
+    command:
+      - --conf.file=/config/l2_das_committee.json
+
+  das-mirror:
+    pid: host # allow debugging
+    image: nitro-node-dev-testnode
+    entrypoint: /usr/local/bin/daserver
+    ports:
+      - "127.0.0.1:7877:9877"
+    volumes:
+      - "config:/config"
+      - "das-mirror-data:/das"
+    command:
+      - --conf.file=/config/l2_das_mirror.json
+
+  timeboost-auctioneer:
+    pid: host # allow debugging
+    image: nitro-node-dev-testnode
+    entrypoint: /usr/local/bin/autonomous-auctioneer
+    volumes:
+      - "config:/config"
+      - "timeboost-auctioneer-data:/data"
+      - "l1keystore:/home/user/l1keystore"
+    command:
+      - --conf.file=/config/autonomous_auctioneer_config.json
+    depends_on:
+      - redis
+
+  timeboost-bid-validator:
+    pid: host # allow debugging
+    image: nitro-node-dev-testnode
+    entrypoint: /usr/local/bin/autonomous-auctioneer
+    ports:
+      - "127.0.0.1:9372:8547"
+    volumes:
+      - "config:/config"
+    command:
+      - --conf.file=/config/bid_validator_config.json
+      - --http.addr=0.0.0.0
+      - --http.vhosts=*
+      - --http.corsdomain=*
+      - --http.api=auctioneer
+      - --log-level=INFO
+    depends_on:
+      - redis
 
   eigenda_proxy:
     container_name: eigenda-proxy
@@ -441,3 +578,8 @@ volumes:
   config:
   postgres-data:
   tokenbridge-data:
+  das-committee-a-data:
+  das-committee-b-data:
+  das-mirror-data:
+  timeboost-auctioneer-data:
+  boldupgrader-data:

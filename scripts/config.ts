@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as consts from './consts'
+import { ethers } from "ethers";
 import { namedAccount, namedAddress } from './accounts'
 
 const path = require("path");
@@ -13,16 +14,31 @@ PRESET_BASE: interop
 GENESIS_FORK_VERSION: 0x20000089
 
 # Altair
-ALTAIR_FORK_EPOCH: 1
+ALTAIR_FORK_EPOCH: 0
 ALTAIR_FORK_VERSION: 0x20000090
 
 # Merge
-BELLATRIX_FORK_EPOCH: 2
+BELLATRIX_FORK_EPOCH: 0
 BELLATRIX_FORK_VERSION: 0x20000091
 TERMINAL_TOTAL_DIFFICULTY: 50
 
+# Capella
+CAPELLA_FORK_EPOCH: 0
+CAPELLA_FORK_VERSION: 0x20000092
+MAX_WITHDRAWALS_PER_PAYLOAD: 16
+
+# DENEB
+DENEB_FORK_EPOCH: 0
+DENEB_FORK_VERSION: 0x20000093
+
+# ELECTRA
+ELECTRA_FORK_VERSION: 0x20000094
+
+# FULU
+FULU_FORK_VERSION: 0x20000095
+
 # Time parameters
-SECONDS_PER_SLOT: 12
+SECONDS_PER_SLOT: 2
 SLOTS_PER_EPOCH: 6
 
 # Deposit contract
@@ -36,8 +52,7 @@ function writeGethGenesisConfig(argv: any) {
     {
         "config": {
             "ChainName": "l1_chain",
-                "chainId": 32382,
-                "consensus": "clique",
+                "chainId": 1337,
                 "homesteadBlock": 0,
                 "daoForkSupport": true,
                 "eip150Block": 0,
@@ -54,13 +69,19 @@ function writeGethGenesisConfig(argv: any) {
                 "terminalBlockHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
                 "arrowGlacierBlock": 0,
                 "grayGlacierBlock": 0,
-                "clique": {
-                "period": 5,
-                    "epoch": 30000
-            },
-            "terminalTotalDifficulty": 50
+                "shanghaiTime": 0,
+                "cancunTime": 1706778826,
+                "terminalTotalDifficulty": 0,
+                "terminalTotalDifficultyPassed": true,
+                "blobSchedule": {
+                    "cancun": {
+                        "target": 3,
+                        "max": 6,
+                        "baseFeeUpdateFraction": 3338477
+                    }
+                }
         },
-        "difficulty": "1",
+        "difficulty": "0",
         "extradata": "0x00000000000000000000000000000000000000000000000000000000000000003f1Eae7D46d88F08fc2F8ed27FCb2AB183EB2d0E0B0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
         "nonce": "0x42",
         "timestamp": "0x0",
@@ -150,10 +171,23 @@ function writeGethGenesisConfig(argv: any) {
     fs.writeFileSync(path.join(consts.configpath, "val_jwt.hex"), val_jwt)
 }
 
+type ChainInfo = {
+    [key: string]: any;
+};
+
+// Define a function to return ChainInfo
+function getChainInfo(): ChainInfo {
+    const filePath = path.join(consts.configpath, "l2_chain_info.json");
+    const fileContents = fs.readFileSync(filePath).toString();
+    const chainInfo: ChainInfo = JSON.parse(fileContents);
+    return chainInfo;
+}
+
 function writeConfigs(argv: any) {
     const valJwtSecret = path.join(consts.configpath, "val_jwt.hex")
     const chainInfoFile = path.join(consts.configpath, "l2_chain_info.json")
-    const baseConfig = {
+    let baseConfig = {
+        "ensure-rollup-deployment": false,
         "parent-chain": {
             "connection": {
                 "url": argv.l1url,
@@ -172,10 +206,10 @@ function writeConfigs(argv: any) {
                 "dangerous": {
                     "without-block-validator": false
                 },
-                "parent-chain-wallet" : {
+                "parent-chain-wallet": {
                     "account": namedAddress("validator"),
                     "password": consts.l1passphrase,
-                    "pathname": consts.l1keystore,    
+                    "pathname": consts.l1keystore,
                 },
                 "disable-challenge": false,
                 "enable": false,
@@ -209,10 +243,10 @@ function writeConfigs(argv: any) {
                 "max-eigenda-batch-size": 16_000_000, // 16MB
                 "enable-eigenda-failover": false,
                 "l1-block-bound": "ignore",
-                "parent-chain-wallet" : {
+                "parent-chain-wallet": {
                     "account": namedAddress("sequencer"),
                     "password": consts.l1passphrase,
-                    "pathname": consts.l1keystore,    
+                    "pathname": consts.l1keystore,
                 },
                 "data-poster": {
                     "redis-signer": {
@@ -226,11 +260,22 @@ function writeConfigs(argv: any) {
                     "url": argv.validationNodeUrl,
                     "jwtsecret": valJwtSecret,
                 }
+            },
+            "data-availability": {
+                "enable": argv.anytrust,
+                "rpc-aggregator": dasBackendsJsonConfig(argv),
+                "rest-aggregator": {
+                    "enable": true,
+                    "urls": ["http://das-mirror:9877"],
+                },
+                // TODO Fix das config to not need this redundant config
+                "parent-chain-node-url": argv.l1url,
+                "sequencer-inbox-address": "not_set"
             }
         },
         "execution": {
             "sequencer": {
-                "enable": false,
+                "enable": false
             },
             "forwarding-target": "null",
         },
@@ -247,6 +292,8 @@ function writeConfigs(argv: any) {
         },
         "metrics": true,
     }
+
+    baseConfig.node["data-availability"]["sequencer-inbox-address"] = ethers.utils.hexlify(getChainInfo()[0]["rollup"]["sequencer-inbox"]);
 
     if (argv.eigenda) {
         baseConfig.node["eigen-da"].enable = true
@@ -265,6 +312,9 @@ function writeConfigs(argv: any) {
         simpleConfig.node["batch-poster"].enable = true
         simpleConfig.node["batch-poster"]["redis-url"] = ""
         simpleConfig.execution["sequencer"].enable = true
+        if (argv.anytrust) {
+            simpleConfig.node["data-availability"]["rpc-aggregator"].enable = true
+        }
         fs.writeFileSync(path.join(consts.configpath, "sequencer_config.json"), JSON.stringify(simpleConfig))
     } else {
         console.log("regular")
@@ -283,11 +333,21 @@ function writeConfigs(argv: any) {
         sequencerConfig.node["seq-coordinator"].enable = true
         sequencerConfig.execution["sequencer"].enable = true
         sequencerConfig.node["delayed-sequencer"].enable = true
+        if (argv.timeboost) {
+          sequencerConfig.execution.sequencer.dangerous = {};
+          sequencerConfig.execution.sequencer.dangerous.timeboost = {
+             "enable": false, // Create it false initially, turn it on with sed in test-node.bash after contract setup.
+             "redis-url": argv.redisUrl
+          };
+        }
         fs.writeFileSync(path.join(consts.configpath, "sequencer_config.json"), JSON.stringify(sequencerConfig))
 
         let posterConfig = JSON.parse(baseConfJSON)
         posterConfig.node["seq-coordinator"].enable = true
         posterConfig.node["batch-poster"].enable = true
+        if (argv.anytrust) {
+            posterConfig.node["data-availability"]["rpc-aggregator"].enable = true
+        }
         fs.writeFileSync(path.join(consts.configpath, "poster_config.json"), JSON.stringify(posterConfig))
     }
 
@@ -356,8 +416,8 @@ function writeL2ChainConfig(argv: any) {
         "arbitrum": {
             "EnableArbOS": true,
             "AllowDebugPrecompiles": true,
-            "DataAvailabilityCommittee": false,
-            "InitialArbOSVersion": 32,
+            "DataAvailabilityCommittee": argv.anytrust,
+            "InitialArbOSVersion": 32, // TODO For Timeboost, this still needs to be set to 31
             "EigenDA": false,
             "InitialChainOwner": argv.l2owner,
             "GenesisBlockNum": 0
@@ -411,23 +471,182 @@ function writeL3ChainConfig(argv: any) {
     fs.writeFileSync(path.join(consts.configpath, "l3_chain_config.json"), l3ChainConfigJSON)
 }
 
+function writeL2DASCommitteeConfig(argv: any) {
+    const sequencerInboxAddr = ethers.utils.hexlify(getChainInfo()[0]["rollup"]["sequencer-inbox"]);
+    const l2DASCommitteeConfig = {
+        "data-availability": {
+            "key": {
+                "key-dir": "/das/keys"
+            },
+            "local-file-storage": {
+                "data-dir": "/das/data",
+                "enable": true,
+                "enable-expiry": true
+            },
+            "sequencer-inbox-address": sequencerInboxAddr,
+            "parent-chain-node-url": argv.l1url
+        },
+        "enable-rest": true,
+        "enable-rpc": true,
+        "log-level": "INFO",
+        "rest-addr": "0.0.0.0",
+        "rest-port": "9877",
+        "rpc-addr": "0.0.0.0",
+        "rpc-port": "9876"
+    }
+    const l2DASCommitteeConfigJSON = JSON.stringify(l2DASCommitteeConfig)
+
+    fs.writeFileSync(path.join(consts.configpath, "l2_das_committee.json"), l2DASCommitteeConfigJSON)
+}
+
+function writeL2DASMirrorConfig(argv: any, sequencerInboxAddr: string) {
+    const l2DASMirrorConfig = {
+        "data-availability": {
+            "local-file-storage": {
+                "data-dir": "/das/data",
+                "enable": true,
+                "enable-expiry": false
+            },
+            "sequencer-inbox-address": sequencerInboxAddr,
+            "parent-chain-node-url": argv.l1url,
+            "rest-aggregator": {
+                "enable": true,
+                "sync-to-storage": {
+                    "eager": false,
+                    "ignore-write-errors": false,
+                    "state-dir": "/das/metadata",
+                    "sync-expired-data": true
+                },
+                "urls": ["http://das-committee-a:9877", "http://das-committee-b:9877"],
+            }
+        },
+        "enable-rest": true,
+        "enable-rpc": false,
+        "log-level": "INFO",
+        "rest-addr": "0.0.0.0",
+        "rest-port": "9877"
+    }
+    const l2DASMirrorConfigJSON = JSON.stringify(l2DASMirrorConfig)
+
+    fs.writeFileSync(path.join(consts.configpath, "l2_das_mirror.json"), l2DASMirrorConfigJSON)
+}
+
+function writeL2DASKeysetConfig(argv: any) {
+    const l2DASKeysetConfig = {
+        "keyset": dasBackendsJsonConfig(argv)
+    }
+    const l2DASKeysetConfigJSON = JSON.stringify(l2DASKeysetConfig)
+
+    fs.writeFileSync(path.join(consts.configpath, "l2_das_keyset.json"), l2DASKeysetConfigJSON)
+}
+
+function dasBackendsJsonConfig(argv: any) {
+    const backends = {
+        "enable": false,
+        "assumed-honest": 1,
+        "backends": [
+            {
+                "url": "http://das-committee-a:9876",
+                "pubkey": argv.dasBlsA
+            },
+            {
+                "url": "http://das-committee-b:9876",
+                "pubkey": argv.dasBlsB
+            }
+        ]
+    }
+    return backends
+}
+
+export const writeTimeboostConfigsCommand = {
+  command: "write-timeboost-configs",
+  describe: "writes configs for the timeboost autonomous auctioneer and bid validator",
+  builder: {
+    "auction-contract": {
+      string: true,
+      describe: "auction contract address",
+      demandOption: true
+    },
+  },
+  handler: (argv: any) => {
+    writeAutonomousAuctioneerConfig(argv)
+    writeBidValidatorConfig(argv)
+  }
+}
+
+function writeAutonomousAuctioneerConfig(argv: any) {
+  const autonomousAuctioneerConfig = {
+    "auctioneer-server": {
+      "auction-contract-address": argv.auctionContract,
+      "db-directory": "/data",
+      "redis-url": "redis://redis:6379",
+      "use-redis-coordinator": true,
+      "redis-coordinator-url": "redis://redis:6379",
+      "wallet":  {
+        "account": namedAddress("auctioneer"),
+        "password": consts.l1passphrase,
+        "pathname": consts.l1keystore
+      },
+    },
+    "bid-validator": {
+      "enable": false
+    }
+  }
+  const autonomousAuctioneerConfigJSON = JSON.stringify(autonomousAuctioneerConfig)
+  fs.writeFileSync(path.join(consts.configpath, "autonomous_auctioneer_config.json"), autonomousAuctioneerConfigJSON)
+}
+
+function writeBidValidatorConfig(argv: any) {
+  const bidValidatorConfig = {
+    "auctioneer-server": {
+      "enable": false
+    },
+    "bid-validator": {
+      "auction-contract-address": argv.auctionContract,
+      "redis-url": "redis://redis:6379",
+      "sequencer-endpoint": "http://sequencer:8547"
+    }
+  }
+  const bidValidatorConfigJSON = JSON.stringify(bidValidatorConfig)
+  fs.writeFileSync(path.join(consts.configpath, "bid_validator_config.json"), bidValidatorConfigJSON)
+}
+
 export const writeConfigCommand = {
     command: "write-config",
     describe: "writes config files",
     builder: {
         simple: {
-          boolean: true,
-          describe: "simple config (sequencer is also poster, validator)",
-          default: false,
+            boolean: true,
+            describe: "simple config (sequencer is also poster, validator)",
+            default: false,
         },
         eigenda:{
             boolean: true,
             default: false,
             describe: "config with EigenDA enabled",
-            },
         },
-
-        handler: (argv: any) => {
+        anytrust: {
+            boolean: true,
+            describe: "run nodes in anytrust mode",
+            default: false
+        },
+        dasBlsA: {
+            string: true,
+            describe: "DAS committee member A BLS pub key",
+            default: ""
+        },
+        dasBlsB: {
+            string: true,
+            describe: "DAS committee member B BLS pub key",
+            default: ""
+        },
+        timeboost: {
+            boolean: true,
+            describe: "run sequencer in timeboost mode",
+            default: false
+        },
+    },
+    handler: (argv: any) => {
         writeConfigs(argv)
     }
 }
@@ -452,6 +671,11 @@ export const writeL2ChainConfigCommand = {
     command: "write-l2-chain-config",
     describe: "writes l2 chain config file",
     builder: {
+        anytrust: {
+            boolean: true,
+            describe: "enable anytrust in chainconfig",
+            default: false
+        },
         eigenda:{
             boolean: true,
             default: false,
@@ -477,3 +701,41 @@ export const writeL3ChainConfigCommand = {
         writeL3ChainConfig(argv)
     }
 }
+
+export const writeL2DASCommitteeConfigCommand = {
+    command: "write-l2-das-committee-config",
+    describe: "writes daserver committee member config file",
+    handler: (argv: any) => {
+        writeL2DASCommitteeConfig(argv)
+    }
+}
+
+export const writeL2DASMirrorConfigCommand = {
+    command: "write-l2-das-mirror-config",
+    describe: "writes daserver mirror config file",
+    handler: (argv: any) => {
+        const sequencerInboxAddr = ethers.utils.hexlify(getChainInfo()[0]["rollup"]["sequencer-inbox"]);
+        writeL2DASMirrorConfig(argv, sequencerInboxAddr)
+    }
+}
+
+export const writeL2DASKeysetConfigCommand = {
+    command: "write-l2-das-keyset-config",
+    describe: "writes DAS keyset config",
+    builder: {
+        dasBlsA: {
+            string: true,
+            describe: "DAS committee member A BLS pub key",
+            default: ""
+        },
+        dasBlsB: {
+            string: true,
+            describe: "DAS committee member B BLS pub key",
+            default: ""
+        },
+    },
+    handler: (argv: any) => {
+        writeL2DASKeysetConfig(argv)
+    }
+}
+
