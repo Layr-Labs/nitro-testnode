@@ -423,16 +423,16 @@ if $build_utils; then
     LOCAL_BUILD_NODES="$LOCAL_BUILD_NODES tokenbridge"
   fi
 
-  if [ "$ci" == true ]; then
-    # workaround to cache docker layers and keep using docker-compose in CI
-    # docker buildx bake --allow=fs=/tmp --file docker-compose.yaml --file docker-compose-ci-cache.json $LOCAL_BUILD_NODES
-  else
+#   if [ "$ci" == true ]; then
+#     # workaround to cache docker layers and keep using docker-compose in CI
+#     # docker buildx bake --allow=fs=/tmp --file docker-compose.yaml --file docker-compose-ci-cache.json $LOCAL_BUILD_NODES
+#   else
     UTILS_NOCACHE=""
     if $force_build_utils; then
       UTILS_NOCACHE="--no-cache"
     fi
     docker compose build --no-rm $UTILS_NOCACHE $LOCAL_BUILD_NODES
-  fi
+#   fi
 fi
 
 if $dev_nitro; then
