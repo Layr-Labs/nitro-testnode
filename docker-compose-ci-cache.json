@@ -1,48 +1,22 @@
 {
   "target": {
-    "scripts": {
-      "cache-from": [
-        "type=local,src=/tmp/.buildx-cache"
-      ],
-      "cache-to": [
-        "type=local,dest=/tmp/.buildx-cache,mode=max"
-      ],
-      "output": [
-        "type=docker"
-      ]
-    },
-    "rollupcreator": {
-      "cache-from": [
-        "type=local,src=/tmp/.buildx-cache"
-      ],
-      "cache-to": [
-        "type=local,dest=/tmp/.buildx-cache,mode=max"
-      ],
-      "output": [
-        "type=docker"
-      ]
-    },
-    "boldupgrader": {
-      "cache-from": [
-        "type=local,src=/tmp/.buildx-cache"
-      ],
-      "cache-to": [
-        "type=local,dest=/tmp/.buildx-cache,mode=max"
-      ],
-      "output": [
-        "type=docker"
-      ]
-    },
-    "tokenbridge": {
-      "cache-from": [
-        "type=local,src=/tmp/.buildx-cache"
-      ],
-      "cache-to": [
-        "type=local,dest=/tmp/.buildx-cache,mode=max"
-      ],
-      "output": [
-        "type=docker"
-      ]
-    }
+    "cache-from": ["type=local,src=/tmp/.buildx-cache/target"],
+    "cache-to": ["type=local,dest=/tmp/.buildx-cache/target,mode=max"],
+    "output": ["type=docker"]
+  },
+  "rollupcreator": {
+    "cache-from": ["type=local,src=/tmp/.buildx-cache/rollupcreator"],
+    "cache-to": ["type=local,dest=/tmp/.buildx-cache/rollupcreator,mode=max"],
+    "output": ["type=docker"]
+  },
+  "boldupgrader": {
+    "cache-from": ["type=local,src=/tmp/.buildx-cache/boldupgrader"],
+    "cache-to": ["type=local,dest=/tmp/.buildx-cache/boldupgrader,mode=max"],
+    "output": ["type=docker"]
+  },
+  "tokenbridge": {
+    "cache-from": ["type=local,src=/tmp/.buildx-cache/tokenbridge"],
+    "cache-to": ["type=local,dest=/tmp/.buildx-cache/tokenbridge,mode=max"],
+    "output": ["type=docker"]
   }
 }
