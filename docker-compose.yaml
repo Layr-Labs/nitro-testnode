@@ -177,8 +177,7 @@ services:
       - --graphql.corsdomain=*
       - --metrics
       - --pprof
-      - --metrics-server.addr 0.0.0.0
-      - --pprof-cfg.addr 0.0.0.0
+
     depends_on:
       - geth
 
@@ -198,8 +197,7 @@ services:
       - --http.api=net,web3,eth,txpool,debug,timeboost,auctioneer
       - --metrics
       - --pprof
-      - --metrics-server.addr 0.0.0.0
-      - --pprof-cfg.addr 0.0.0.0
+
     depends_on:
       - geth
       - redis
@@ -220,8 +218,7 @@ services:
       - --http.api=net,web3,eth,txpool,debug,timeboost,auctioneer
       - --metrics
       - --pprof
-      - --metrics-server.addr 0.0.0.0
-      - --pprof-cfg.addr 0.0.0.0
+
     depends_on:
       - geth
       - redis
@@ -242,8 +239,7 @@ services:
       - --http.api=net,web3,eth,txpool,debug,timeboost,auctioneer
       - --metrics
       - --pprof
-      - --metrics-server.addr 0.0.0.0
-      - --pprof-cfg.addr 0.0.0.0
+
     depends_on:
       - geth
       - redis
@@ -259,7 +255,7 @@ services:
       - "unsafestaker-data:/home/user/.arbitrum/local/nitro"
       - "l1keystore:/home/user/l1keystore"
       - "config:/config"
-    command: --conf.file /config/unsafe_staker_config.json --metrics --pprof --metrics-server.addr 0.0.0.0 --pprof-cfg.addr 0.0.0.0
+    command: --conf.file /config/unsafe_staker_config.json --metrics
     depends_on:
       - sequencer
       - redis
@@ -276,7 +272,7 @@ services:
       - "poster-data:/home/user/.arbitrum/local/nitro"
       - "l1keystore:/home/user/l1keystore"
       - "config:/config"
-    command: --conf.file /config/poster_config.json --metrics --pprof --metrics-server.addr 0.0.0.0 --pprof-cfg.addr 0.0.0.0
+    command: --conf.file /config/poster_config.json --metrics
     depends_on:
       - geth
       - redis
@@ -292,7 +288,7 @@ services:
       - "poster-data-b:/home/user/.arbitrum/local/nitro"
       - "l1keystore:/home/user/l1keystore"
       - "config:/config"
-    command: --conf.file /config/poster_config.json --metrics --pprof --metrics-server.addr 0.0.0.0 --pprof-cfg.addr 0.0.0.0
+    command: --conf.file /config/poster_config.json --metrics
     depends_on:
       - geth
       - redis
@@ -308,7 +304,7 @@ services:
       - "poster-data-c:/home/user/.arbitrum/local/nitro"
       - "l1keystore:/home/user/l1keystore"
       - "config:/config"
-    command: --conf.file /config/poster_config.json --metrics --pprof --metrics-server.addr 0.0.0.0 --pprof-cfg.addr 0.0.0.0
+    command: --conf.file /config/poster_config.json --metrics
     depends_on:
       - geth
       - redis
@@ -324,7 +320,7 @@ services:
       - "validator-data:/home/user/.arbitrum/local/nitro"
       - "l1keystore:/home/user/l1keystore"
       - "config:/config"
-    command: --conf.file /config/validator_config.json --http.port 8547 --http.api net,web3,arb,debug --ws.port 8548 --metrics --pprof --metrics-server.addr 0.0.0.0 --pprof-cfg.addr 0.0.0.0
+    command: --conf.file /config/validator_config.json --http.port 8547 --http.api net,web3,arb,debug --ws.port 8548 --metrics
     depends_on:
       - sequencer
       - validation_node
@@ -340,7 +336,7 @@ services:
       - "validator-data:/home/user/.arbitrum/local/nitro"
       - "l1keystore:/home/user/l1keystore"
       - "config:/config"
-    command: --conf.file /config/l3node_config.json --http.port 3347 --http.api net,web3,arb,debug,eth --ws.port 3348 --metrics --pprof --metrics-server.addr 0.0.0.0 --pprof-cfg.addr 0.0.0.0
+    command: --conf.file /config/l3node_config.json --http.port 3347 --http.api net,web3,arb,debug,eth --ws.port 3348 --metrics
     depends_on:
       - sequencer
       - validation_node
@@ -353,7 +349,7 @@ services:
       - "127.0.0.1:8949:8549"
     volumes:
       - "config:/config"
-    command: --conf.file /config/validation_node_config.json --metrics --pprof --metrics-server.addr 0.0.0.0 --pprof-cfg.addr 0.0.0.0
+    command: --conf.file /config/validation_node_config.json --metrics
 
   scripts:
     build: scripts/
@@ -368,7 +364,7 @@ services:
     entrypoint: /usr/local/bin/relay
     ports:
       - "127.0.0.1:9652:9652"
-    command: --chain.id 412346 --node.feed.input.url ws://sequencer:9642 --node.feed.output.port 9652 --metrics --pprof --metrics-server.addr 0.0.0.0 --pprof-cfg.addr 0.0.0.0
+    command: --chain.id 412346 --node.feed.input.url ws://sequencer:9642 --node.feed.output.port 9652 --metrics
 
   tokenbridge:
     depends_on:

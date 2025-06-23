@@ -343,11 +343,13 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+
+NODES="sequencer"
+
 if $eigenda; then
-    NODES="eigenda_proxy"
+    NODES="$NODES eigenda_proxy"
 fi
 
-NODES="$NODES sequencer"
 INITIAL_SEQ_NODES="sequencer"
 
 if ! $simple; then
