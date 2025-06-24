@@ -432,7 +432,7 @@ if $build_utils; then
       UTILS_NOCACHE="--no-cache"
     fi
     docker compose build --no-rm $UTILS_NOCACHE $LOCAL_BUILD_NODES
-#   fi
+  fi
 fi
 
 if $dev_nitro; then
