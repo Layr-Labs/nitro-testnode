@@ -2,7 +2,7 @@
 
 set -eu
 
-NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro-eigenda:v3.6.4-merge-linux-amd64
+NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro-eigenda:ethenotethan--update-eigenda-version
 BLOCKSCOUT_VERSION=offchainlabs/blockscout:v1.1.0-0e716c8
 
 DEFAULT_NITRO_CONTRACTS_VERSION="eigenda-v3.1.0"
