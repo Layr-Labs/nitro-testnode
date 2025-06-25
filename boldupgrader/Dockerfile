@@ -4,7 +4,7 @@ RUN apt-get update && \
 ARG BOLD_CONTRACTS_BRANCH=bold-merge-script
 WORKDIR /workspace  
 RUN git clone --no-checkout https://github.com/Layr-Labs/nitro-contracts.git ./
-RUN git checkout eigenda-v3.1.0
+RUN git checkout f6dd563ab81124a811ac3a660082897b04736196
 RUN yarn install && yarn cache clean
 RUN curl -L https://foundry.paradigm.xyz | bash
 ENV PATH="${PATH}:/root/.foundry/bin"
