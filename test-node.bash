@@ -2,7 +2,7 @@
 
 set -eu
 
-NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro-eigenda:v3.6.4-merge-linux-amd64
+NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro/nitro-node-dev:ethenotethan--update-eigenda-version
 BLOCKSCOUT_VERSION=offchainlabs/blockscout:v1.1.0-0e716c8
 
 DEFAULT_NITRO_CONTRACTS_VERSION="eigenda-v3.1.0"
@@ -343,11 +343,13 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+
+NODES="sequencer"
+
 if $eigenda; then
-    NODES="eigenda_proxy"
+    NODES="$NODES eigenda_proxy"
 fi
 
-NODES="$NODES sequencer"
 INITIAL_SEQ_NODES="sequencer"
 
 if ! $simple; then
@@ -421,17 +423,17 @@ if $build_utils; then
     LOCAL_BUILD_NODES="$LOCAL_BUILD_NODES tokenbridge"
   fi
 
-  if [ "$ci" == true ]; then
-    # workaround to cache docker layers and keep using docker-compose in CI
-    docker buildx bake --allow=fs=/tmp --file docker-compose.yaml --file docker-compose-ci-cache.json $LOCAL_BUILD_NODES
-  else
+#   if [ "$ci" == true ]; then
+#     # workaround to cache docker layers and keep using docker-compose in CI
+#     docker buildx bake --allow=fs=/tmp --file docker-compose.yaml --file docker-compose-ci-cache.json $LOCAL_BUILD_NODES
+#   else
     UTILS_NOCACHE=""
     if $force_build_utils; then
       UTILS_NOCACHE="--no-cache"
     fi
     docker compose build --no-rm $UTILS_NOCACHE $LOCAL_BUILD_NODES
   fi
-fi
+# fi
 
 if $dev_nitro; then
   docker tag nitro-node-dev:latest nitro-node-dev-testnode
@@ -614,21 +616,22 @@ if $force_init; then
     echo == Deploy CacheManager on L2
     docker compose run -e CHILD_CHAIN_RPC="http://sequencer:8547" -e CHAIN_OWNER_PRIVKEY=$l2ownerKey rollupcreator deploy-cachemanager-testnode
 
-    if $boldupgrade; then
-        echo == Deploying WETH as BOLD stake token
-        stakeTokenAddress=`docker compose run scripts create-weth --deployer l2owner --deposit 100 | tail -n 1 | awk '{ print $NF }'`
-        echo BOLD stake token address: $stakeTokenAddress
-        docker compose run scripts transfer-erc20 --token $stakeTokenAddress --l1 --amount 100 --from l2owner --to validator
-        echo == Preparing BOLD upgrade
-        docker compose run -e TESTNODE_MODE=true -e ROLLUP_ADDRESS=$rollupAddress -e STAKE_TOKEN=$stakeTokenAddress boldupgrader script:bold-prepare
-        # retry this 10 times because the staker might not have made a node yet
-        for i in {1..10}; do
-            docker compose run -e TESTNODE_MODE=true -e ROLLUP_ADDRESS=$rollupAddress -e STAKE_TOKEN=$stakeTokenAddress boldupgrader script:bold-populate-lookup && break || true
-            echo "Failed to populate lookup table, retrying..."
-            sleep 10
-        done
-        docker compose run -e TESTNODE_MODE=true -e ROLLUP_ADDRESS=$rollupAddress -e STAKE_TOKEN=$stakeTokenAddress boldupgrader script:bold-local-execute
-    fi
+    # NOTE: Disabling script due to high bug frequency and limited correctness guarantees 
+    # if $boldupgrade; then
+    #     echo == Deploying WETH as BOLD stake token
+    #     stakeTokenAddress=`docker compose run scripts create-weth --deployer l2owner --deposit 100 | tail -n 1 | awk '{ print $NF }'`
+    #     echo BOLD stake token address: $stakeTokenAddress
+    #     docker compose run scripts transfer-erc20 --token $stakeTokenAddress --l1 --amount 100 --from l2owner --to validator
+    #     echo == Preparing BOLD upgrade
+    #     docker compose run -e TESTNODE_MODE=true -e ROLLUP_ADDRESS=$rollupAddress -e STAKE_TOKEN=$stakeTokenAddress boldupgrader script:bold-prepare
+    #     # retry this 10 times because the staker might not have made a node yet
+    #     for i in {1..10}; do
+    #         docker compose run -e TESTNODE_MODE=true -e ROLLUP_ADDRESS=$rollupAddress -e STAKE_TOKEN=$stakeTokenAddress boldupgrader script:bold-populate-lookup && break || true
+    #         echo "Failed to populate lookup table, retrying..."
+    #         sleep 10
+    #     done
+    #     docker compose run -e TESTNODE_MODE=true -e ROLLUP_ADDRESS=$rollupAddress -e STAKE_TOKEN=$stakeTokenAddress boldupgrader script:bold-local-execute
+    # fi
 
     if $l3node; then
         echo == Funding l3 users
