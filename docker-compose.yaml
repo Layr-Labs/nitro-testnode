@@ -84,7 +84,7 @@ services:
       - --miner.etherbase=0x3f1Eae7D46d88F08fc2F8ed27FCb2AB183EB2d0E
       - --gcmode=archive
 
-  # Creates a genesis state for the beacon chain using a YAML configuration file and
+      # Creates a genesis state for the beacon chain using a YAML configuration file and
   # a deterministic set of validators
   # TODO: Make num validators customizable
   create_beacon_chain_genesis:
@@ -102,7 +102,7 @@ services:
       - "consensus:/consensus"
       - "config:/config"
 
-  # Runs a Prysm beacon chain from a specified genesis state created in the previous step
+    # Runs a Prysm beacon chain from a specified genesis state created in the previous step
   # and connects to go-ethereum in the same network as the execution client.
   # The account used in go-ethereum is set as the suggested fee recipient for transactions
   # proposed via the validators attached to the beacon node.
