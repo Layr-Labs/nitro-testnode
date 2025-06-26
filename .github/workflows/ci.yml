@@ -21,6 +21,7 @@ jobs:
   build_and_run:
     runs-on: arbitrum-nitro-2xl
     strategy:
+      fail-fast: false
       matrix:
         pos: [pos, no-pos]
         l3node: [l3node, l3node-token-6, no-l3node]
