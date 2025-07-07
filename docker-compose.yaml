@@ -175,9 +175,9 @@ services:
       - --graphql.enable
       - --graphql.vhosts=*
       - --graphql.corsdomain=*
+      - --ws.port=8548
       - --metrics
       - --pprof
-
     depends_on:
       - geth
 
