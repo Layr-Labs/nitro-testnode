@@ -33,6 +33,7 @@ import {
   sendRPCCommand,
   setValidKeysetCommand,
   waitForSyncCommand,
+  waitForContractSyncCommand,
   transferL3ChainOwnershipCommand,
   createFeeTokenPricerCommand,
 } from "./ethcommands";
@@ -80,6 +81,7 @@ async function main() {
     .command(redisReadCommand)
     .command(redisInitCommand)
     .command(waitForSyncCommand)
+    .command(waitForContractSyncCommand)
     .strict()
     .demandCommand(1, "a command must be specified")
     .epilogue(namedAccountHelpString)

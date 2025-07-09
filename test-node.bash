@@ -531,6 +531,13 @@ if $force_init; then
         docker compose run --entrypoint sh rollupcreator -c "jq [.[]] /config/deployed_chain_info.json > /config/l2_chain_info.json"
     fi
 
+    # Extract rollup address from deployment info
+    rollupAddress=`docker compose run --entrypoint sh rollupcreator -c "jq -r '.[0].rollup.rollup' /config/deployed_chain_info.json" | tail -n 1 | tr -d '\r\n'`
+
+    # Wait for rollup contract to be available via L1 RPC to prevent synchronization issues
+    echo == Waiting for rollup contract $rollupAddress to be available via L1 RPC
+    docker compose run scripts wait-for-contract-sync --url http://geth:8545 --contract $rollupAddress --timeout 30
+
 fi # $force_init
 
 anytrustNodeConfigLine=""
@@ -583,7 +590,6 @@ if $force_init; then
     docker compose up --wait $INITIAL_SEQ_NODES
     docker compose run scripts bridge-funds --ethamount 100000 --wait
     docker compose run scripts send-l2 --ethamount 100 --to l2owner --wait
-    rollupAddress=`docker compose run --entrypoint sh poster -c "jq -r '.[0].rollup.rollup' /config/deployed_chain_info.json | tail -n 1 | tr -d '\r\n'"`
 
     if $l2timeboost; then
         docker compose run scripts send-l2 --ethamount 100 --to auctioneer --wait
@@ -610,6 +616,21 @@ if $force_init; then
         sleep 10 # no idea why this sleep is needed but without it the deploy fails randomly
         docker compose run -e ROLLUP_OWNER_KEY=$l2ownerKey -e ROLLUP_ADDRESS=$rollupAddress -e PARENT_KEY=$devprivkey -e PARENT_RPC=http://geth:8545 -e CHILD_KEY=$devprivkey -e CHILD_RPC=http://sequencer:8547 tokenbridge deploy:local:token-bridge
         docker compose run --entrypoint sh tokenbridge -c "cat network.json && cp network.json l1l2_network.json && cp network.json localNetwork.json"
+
+        # Extract L1 gateway router address from token bridge deployment
+        l1GatewayRouter=`docker compose run --entrypoint sh tokenbridge -c "jq -r '.l1Network.tokenBridge.l1GatewayRouter' l1l2_network.json" | tail -n 1 | tr -d '\r\n'`
+
+        # Wait for L1 token bridge contracts to be available via L1 RPC
+        echo == Waiting for L1 token bridge contracts to be available via L1 RPC
+        docker compose run scripts wait-for-contract-sync --url http://geth:8545 --contract $l1GatewayRouter --timeout 30
+
+        # Extract L2 gateway router address from token bridge deployment
+        l2GatewayRouter=`docker compose run --entrypoint sh tokenbridge -c "jq -r '.l2Network.tokenBridge.l2GatewayRouter' l1l2_network.json" | tail -n 1 | tr -d '\r\n'`
+
+        # Wait for L2 token bridge contracts to be available via L2 RPC
+        echo == Waiting for L2 token bridge contracts to be available via L2 RPC
+        docker compose run scripts wait-for-contract-sync --url http://sequencer:8547 --contract $l2GatewayRouter --timeout 30
+
         echo
     fi
 
@@ -676,21 +697,41 @@ if $force_init; then
         docker compose run -e DEPLOYER_PRIVKEY=$l3ownerkey -e PARENT_CHAIN_RPC="http://sequencer:8547" -e PARENT_CHAIN_ID=412346 -e CHILD_CHAIN_NAME="orbit-dev-test" -e MAX_DATA_SIZE=104857 -e OWNER_ADDRESS=$l3owneraddress -e WASM_MODULE_ROOT=$wasmroot -e SEQUENCER_ADDRESS=$l3sequenceraddress -e AUTHORIZE_VALIDATORS=10 -e CHILD_CHAIN_CONFIG_PATH="/config/l3_chain_config.json" -e CHAIN_DEPLOYMENT_INFO="/config/l3deployment.json" -e CHILD_CHAIN_INFO="/config/deployed_l3_chain_info.json" $EXTRA_L3_DEPLOY_FLAG rollupcreator create-rollup-testnode
         docker compose run --entrypoint sh rollupcreator -c "jq [.[]] /config/deployed_l3_chain_info.json > /config/l3_chain_info.json"
 
+        # Extract L3 rollup address from deployment info
+        l3rollupAddress=`docker compose run --entrypoint sh rollupcreator -c "jq -r '.[0].rollup.rollup' /config/deployed_l3_chain_info.json" | tail -n 1 | tr -d '\r\n'`
+
+        # Wait for L3 rollup contract to be available via L2 RPC to prevent synchronization issues
+        echo == Waiting for L3 rollup contract $l3rollupAddress to be available via L2 RPC
+        docker compose run scripts wait-for-contract-sync --url http://sequencer:8547 --contract $l3rollupAddress --timeout 30
+
         echo == Funding l3 funnel and dev key
         docker compose up --wait l3node sequencer
 
         if $l3_token_bridge; then
             echo == Deploying L2-L3 token bridge
             deployer_key=`printf "%s" "user_token_bridge_deployer" | openssl dgst -sha256 | sed 's/^.*= //'`
-            rollupAddress=`docker compose run --entrypoint sh poster -c "jq -r '.[0].rollup.rollup' /config/deployed_l3_chain_info.json | tail -n 1 | tr -d '\r\n'"`
             l2Weth=""
             if $tokenbridge; then
                 # we deployed an L1 L2 token bridge
                 # we need to pull out the L2 WETH address and pass it as an override to the L2 L3 token bridge deployment
                 l2Weth=`docker compose run --entrypoint sh tokenbridge -c "cat l1l2_network.json" | jq -r '.l2Network.tokenBridge.l2Weth'`
             fi
-            docker compose run -e PARENT_WETH_OVERRIDE=$l2Weth -e ROLLUP_OWNER_KEY=$l3ownerkey -e ROLLUP_ADDRESS=$rollupAddress -e PARENT_RPC=http://sequencer:8547 -e PARENT_KEY=$deployer_key  -e CHILD_RPC=http://l3node:3347 -e CHILD_KEY=$deployer_key tokenbridge deploy:local:token-bridge
+            docker compose run -e PARENT_WETH_OVERRIDE=$l2Weth -e ROLLUP_OWNER_KEY=$l3ownerkey -e ROLLUP_ADDRESS=$l3rollupAddress -e PARENT_RPC=http://sequencer:8547 -e PARENT_KEY=$deployer_key  -e CHILD_RPC=http://l3node:3347 -e CHILD_KEY=$deployer_key tokenbridge deploy:local:token-bridge
             docker compose run --entrypoint sh tokenbridge -c "cat network.json && cp network.json l2l3_network.json"
+
+            # Extract L2 gateway router address from L2-L3 token bridge deployment
+            l2l3GatewayRouter=`docker compose run --entrypoint sh tokenbridge -c "jq -r '.l1Network.tokenBridge.l1GatewayRouter' l2l3_network.json" | tail -n 1 | tr -d '\r\n'`
+
+            # Wait for L2-L3 token bridge contracts to be available via L2 RPC
+            echo == Waiting for L2-L3 token bridge contracts to be available via L2 RPC
+            docker compose run scripts wait-for-contract-sync --url http://sequencer:8547 --contract $l2l3GatewayRouter --timeout 30
+
+            # Extract L3 gateway router address from L2-L3 token bridge deployment
+            l3GatewayRouter=`docker compose run --entrypoint sh tokenbridge -c "jq -r '.l2Network.tokenBridge.l2GatewayRouter' l2l3_network.json" | tail -n 1 | tr -d '\r\n'`
+
+            # Wait for L2-L3 token bridge contracts to be available via L3 RPC
+            echo == Waiting for L2-L3 token bridge contracts to be available via L3 RPC
+            docker compose run scripts wait-for-contract-sync --url http://l3node:3347 --contract $l3GatewayRouter --timeout 30
 
             # set L3 UpgradeExecutor, deployed by token bridge creator in previous step, to be the L3 chain owner. L3owner (EOA) and alias of L2 UpgradeExectuor have the executor role on the L3 UpgradeExecutor
             echo == Set L3 UpgradeExecutor to be chain owner

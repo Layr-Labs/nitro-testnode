@@ -752,3 +752,39 @@ export const waitForSyncCommand = {
     } while (syncStatus !== false)
   },
 };
+
+// Added for EigenDA fork: Unlike wait-for-sync which waits for general RPC sync status,
+// this command specifically waits for a deployed contract to be available via RPC.
+// This prevents race conditions where subsequent operations depend on freshly deployed contracts.
+export const waitForContractSyncCommand = {
+  command: "wait-for-contract-sync",
+  describe: "wait for contract to be available via RPC",
+  builder: {
+    url: { string: true, describe: "RPC URL to check", default: "http://geth:8545" },
+    contract: { string: true, describe: "contract address to check", demandOption: true },
+    timeout: { number: true, describe: "timeout in seconds", default: 30 },
+  },
+  handler: async (argv: any) => {
+    const provider = new ethers.providers.JsonRpcProvider(argv.url);
+    const contractAddress = argv.contract;
+    const timeoutMs = argv.timeout * 1000;
+    const startTime = Date.now();
+    
+    console.log(`Waiting for contract ${contractAddress} to be available via RPC at ${argv.url}...`);
+    
+    while (Date.now() - startTime < timeoutMs) {
+      try {
+        const code = await provider.getCode(contractAddress);
+        if (code && code.length > 2) {
+          console.log(`✓ Contract ${contractAddress} is now available via RPC`);
+          return;
+        }
+      } catch (error) {
+        console.log(`Waiting for contract ${contractAddress} to sync... (${Math.round((Date.now() - startTime) / 1000)}s)`);
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    throw new Error(`Contract ${contractAddress} not synced within ${argv.timeout}s`);
+  },
+};
