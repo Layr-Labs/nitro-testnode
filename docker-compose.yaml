@@ -179,16 +179,8 @@ services:
       - --metrics
       - --pprof
     depends_on:
-      geth:
-        condition: service_healthy
-      scripts:
-        condition: service_completed_successfully
-    # Add health check that verifies config exists
-    healthcheck:
-      test: ["CMD", "test", "-f", "/config/sequencer_config.json"]
-      interval: 1s
-      timeout: 5s
-      retries: 30
+      - geth
+      - scripts
 
   sequencer_b:
     pid: host # allow debugging
