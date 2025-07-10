@@ -705,7 +705,10 @@ if $force_init; then
         docker compose run scripts wait-for-contract-sync --url http://sequencer:8547 --contract $l3rollupAddress --timeout 30
 
         echo == Funding l3 funnel and dev key
-        docker compose up --wait l3node sequencer
+        docker compose up --wait sequencer
+        # Wait for sequencer WebSocket to be ready
+        docker compose run --rm scripts /workspace/scripts/wait-for-websocket.sh sequencer 8548 30
+        docker compose up --wait l3node
 
         if $l3_token_bridge; then
             echo == Deploying L2-L3 token bridge
