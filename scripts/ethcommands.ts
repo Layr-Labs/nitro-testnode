@@ -7,6 +7,7 @@ import * as L1AtomicTokenBridgeCreator from "@arbitrum/token-bridge-contracts/bu
 import * as ERC20 from "@openzeppelin/contracts/build/contracts/ERC20.json";
 import * as TestWETH9 from "@arbitrum/token-bridge-contracts/build/contracts/contracts/tokenbridge/test/TestWETH9.sol/TestWETH9.json";
 import * as fs from "fs";
+import * as net from "net";
 import { ARB_OWNER } from "./consts";
 import * as TransparentUpgradeableProxy from "@openzeppelin/contracts/build/contracts/TransparentUpgradeableProxy.json"
 import * as ExpressLaneAuctionContract from "@arbitrum/nitro-contracts/build/contracts/src/express-lane-auction/ExpressLaneAuction.sol/ExpressLaneAuction.json"
@@ -786,5 +787,91 @@ export const waitForContractSyncCommand = {
     }
     
     throw new Error(`Contract ${contractAddress} not synced within ${argv.timeout}s`);
+  },
+};
+
+// Added for EigenDA fork: Wait for a file to exist and be non-empty
+// This is used to wait for configuration files to be written before starting services
+export const waitForFileCommand = {
+  command: "wait-for-file",
+  describe: "wait for a file to exist and be non-empty",
+  builder: {
+    file: { string: true, describe: "path to the file to wait for", demandOption: true },
+    timeout: { number: true, describe: "timeout in seconds", default: 30 },
+  },
+  handler: async (argv: any) => {
+    const filePath = argv.file;
+    const timeoutMs = argv.timeout * 1000;
+    const startTime = Date.now();
+    
+    console.log(`Waiting for file ${filePath} to exist...`);
+    
+    while (Date.now() - startTime < timeoutMs) {
+      try {
+        const stats = fs.statSync(filePath);
+        if (stats.isFile() && stats.size > 0) {
+          console.log(`File ${filePath} is available`);
+          return;
+        }
+      } catch (error) {
+        // File doesn't exist yet, continue waiting
+      }
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    
+    throw new Error(`Timeout waiting for file ${filePath}`);
+  },
+};
+
+// Added for EigenDA fork: Wait for a WebSocket port to be available
+// This is used to ensure services are ready before dependent services start
+export const waitForWebsocketCommand = {
+  command: "wait-for-websocket",
+  describe: "wait for WebSocket service to be available",
+  builder: {
+    host: { string: true, describe: "hostname to check", demandOption: true },
+    port: { number: true, describe: "port number to check", demandOption: true },
+    timeout: { number: true, describe: "timeout in seconds", default: 30 },
+  },
+  handler: async (argv: any) => {
+    const host = argv.host;
+    const port = argv.port;
+    const timeoutMs = argv.timeout * 1000;
+    const startTime = Date.now();
+    
+    console.log(`Waiting for WebSocket at ${host}:${port}...`);
+    
+    while (Date.now() - startTime < timeoutMs) {
+      try {
+        await new Promise((resolve, reject) => {
+          const socket = new net.Socket();
+          socket.setTimeout(1000);
+          
+          socket.on('connect', () => {
+            socket.end();
+            resolve(true);
+          });
+          
+          socket.on('timeout', () => {
+            socket.destroy();
+            reject(new Error('timeout'));
+          });
+          
+          socket.on('error', (err) => {
+            reject(err);
+          });
+          
+          socket.connect(port, host);
+        });
+        
+        console.log(`WebSocket port ${port} is available on ${host}`);
+        return;
+      } catch (error) {
+        // Connection failed, continue waiting
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
+    
+    throw new Error(`Timeout waiting for WebSocket at ${host}:${port}`);
   },
 };

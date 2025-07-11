@@ -34,6 +34,8 @@ import {
   setValidKeysetCommand,
   waitForSyncCommand,
   waitForContractSyncCommand,
+  waitForFileCommand,
+  waitForWebsocketCommand,
   transferL3ChainOwnershipCommand,
   createFeeTokenPricerCommand,
 } from "./ethcommands";
@@ -82,6 +84,8 @@ async function main() {
     .command(redisInitCommand)
     .command(waitForSyncCommand)
     .command(waitForContractSyncCommand)
+    .command(waitForFileCommand)
+    .command(waitForWebsocketCommand)
     .strict()
     .demandCommand(1, "a command must be specified")
     .epilogue(namedAccountHelpString)

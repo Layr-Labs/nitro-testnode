@@ -580,7 +580,7 @@ if $force_init; then
         
         # Wait for config files to be written
         echo == Waiting for sequencer config to be written
-        docker compose run --rm scripts /workspace/scripts/wait-for-file.sh --file /config/sequencer_config.json --timeout 30
+        docker compose run scripts wait-for-file --file /config/sequencer_config.json --timeout 30
     else
         echo == Writing configs
         docker compose run scripts write-config $anytrustNodeConfigLine $timeboostNodeConfigLine --eigenda $eigenda
@@ -711,7 +711,7 @@ if $force_init; then
         echo == Funding l3 funnel and dev key
         docker compose up --wait sequencer
         # Wait for sequencer WebSocket to be ready
-        docker compose run --rm scripts /workspace/scripts/wait-for-websocket.sh sequencer 8548 30
+        docker compose run scripts wait-for-websocket --host sequencer --port 8548 --timeout 30
         docker compose up --wait l3node
 
         if $l3_token_bridge; then
