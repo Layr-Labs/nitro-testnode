@@ -580,7 +580,7 @@ if $force_init; then
         
         # Wait for config files to be written
         echo == Waiting for sequencer config to be written
-        docker compose run scripts wait-for-file --file /config/sequencer_config.json --timeout 30
+        docker compose run --rm scripts /workspace/scripts/wait-for-file.sh --file /config/sequencer_config.json --timeout 30
     else
         echo == Writing configs
         docker compose run scripts write-config $anytrustNodeConfigLine $timeboostNodeConfigLine --eigenda $eigenda
