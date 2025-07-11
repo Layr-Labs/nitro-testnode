@@ -534,40 +534,9 @@ if $force_init; then
     # Extract rollup address from deployment info
     rollupAddress=`docker compose run --entrypoint sh rollupcreator -c "jq -r '.[0].rollup.rollup' /config/deployed_chain_info.json" | tail -n 1 | tr -d '\r\n'`
 
-    # Extract additional contract addresses for staker initialization
-    challengeManagerAddress=`docker compose run --entrypoint sh rollupcreator -c "jq -r '.[0].rollup.challengeManager' /config/deployed_chain_info.json" | tail -n 1 | tr -d '\r\n'`
-    rollupUserLogicAddress=`docker compose run --entrypoint sh rollupcreator -c "jq -r '.[0].rollup.rollupUserLogic' /config/deployed_chain_info.json" | tail -n 1 | tr -d '\r\n'`
-    rollupAdminLogicAddress=`docker compose run --entrypoint sh rollupcreator -c "jq -r '.[0].rollup.rollupAdminLogic' /config/deployed_chain_info.json" | tail -n 1 | tr -d '\r\n'`
-    sequencerInboxAddress=`docker compose run --entrypoint sh rollupcreator -c "jq -r '.[0].rollup.sequencerInbox' /config/deployed_chain_info.json" | tail -n 1 | tr -d '\r\n'`
-    stakeTokenAddress=`docker compose run --entrypoint sh rollupcreator -c "jq -r '.[0].rollup.stakeToken' /config/deployed_chain_info.json" | tail -n 1 | tr -d '\r\n'`
-
-    # Wait for all contracts required by the staker to be available via L1 RPC
-    echo == Waiting for rollup contracts to be available via L1 RPC
-
-    # Core rollup contract
-    echo "  - Waiting for rollup proxy: $rollupAddress"
+    # Wait for rollup contract to be available via L1 RPC to prevent synchronization issues
+    echo == Waiting for rollup contract $rollupAddress to be available via L1 RPC
     docker compose run scripts wait-for-contract-sync --url http://geth:8545 --contract $rollupAddress --timeout 30
-
-    # Challenge manager for disputes
-    echo "  - Waiting for challenge manager: $challengeManagerAddress"
-    docker compose run scripts wait-for-contract-sync --url http://geth:8545 --contract $challengeManagerAddress --timeout 30
-
-    # User and admin logic contracts
-    echo "  - Waiting for rollup user logic: $rollupUserLogicAddress"
-    docker compose run scripts wait-for-contract-sync --url http://geth:8545 --contract $rollupUserLogicAddress --timeout 30
-
-    echo "  - Waiting for rollup admin logic: $rollupAdminLogicAddress"
-    docker compose run scripts wait-for-contract-sync --url http://geth:8545 --contract $rollupAdminLogicAddress --timeout 30
-
-    # Sequencer inbox for batch submissions
-    echo "  - Waiting for sequencer inbox: $sequencerInboxAddress"
-    docker compose run scripts wait-for-contract-sync --url http://geth:8545 --contract $sequencerInboxAddress --timeout 30
-
-    # Stake token (WETH) for staking
-    echo "  - Waiting for stake token: $stakeTokenAddress"
-    docker compose run scripts wait-for-contract-sync --url http://geth:8545 --contract $stakeTokenAddress --timeout 30
-
-    echo == All rollup contracts are available
 
 fi # $force_init
 
