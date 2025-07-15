@@ -371,6 +371,7 @@ function writeConfigs(argv: any) {
             "addr": "",
         },
         "validation": {
+            "use-jit": true,
             "api-auth": true,
             "api-public": false,
         },

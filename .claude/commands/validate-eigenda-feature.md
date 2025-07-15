@@ -1,6 +1,6 @@
 # Validate EigenDA Feature
 
-The purpose of this document is to provide an AI agent with a framework for doing manual verification checks on a local Arbitrum Nitro testnode cluster. All output files will be saved to a `<validation_summary>`, which should be named `{session_timestamp}_validation_summary.md` and placed inside the original log directory.
+The purpose of this document is to provide an AI agent with a framework for doing manual verification checks on a local Arbitrum Nitro testnode cluster. All output files will be saved to a `{validation_summary}`, which should be named `{session_timestamp}_validation_summary.md` and placed inside the original log directory.
 
 ## Context
 Sometimes when running the `./testnode-bash` script:
@@ -18,6 +18,7 @@ Sometimes when running the `./testnode-bash` script:
 EigenDA Manual Test Validation Summary
 
 Nitro container used: {$NITRO_NODE_VERSION in test-node.bash}
+WASM Module root used: {$WASM_MODULE_ROOT in validator logs}
 
 Test Summary:
 - Scenario xx:
@@ -87,10 +88,12 @@ InboxTracker sequencerBatchCount=X messageCount=X l1Block=X l1Timestamp=...
 
 ## Scenarios
 
-### Scenario 1 - EigenDA with Validation Enabled
+### Scenario 1 - EigenDA with Arbitrator Interperter Validation Enabled
 
 **Phase 0: Update Config**  
-In `scripts/config.ts`, set `enable-eigenda-failover` to `false`.
+In `scripts/config.ts`, set:
+  - `enable-eigenda-failover` to `false`
+  - `use-jit` to `true`
 
 **Phase 1: Spinup Cluster**
 ```
@@ -107,10 +110,16 @@ In `scripts/config.ts`, set `enable-eigenda-failover` to `false`.
 
 **Phase 3: Run Validation Checks**
 
+**Phase 4: Teardown**
+Tear down compose cluster
+In `scripts/config.ts`, set:
+  - `enable-eigenda-failover` to `true`
+  - `use-jit` to `false`
+
 ### Scenario 2 - EigenDA with Validation Enabled & AnyTrust Failover Enabled
 
 **Phase 0: Update Config**  
-Set `enable-eigenda-failover` to `true` (reset to false after test).
+Set `enable-eigenda-failover` to `true`
 
 **Phase 1: Spinup Cluster**
 ```
@@ -124,6 +133,11 @@ Set `enable-eigenda-failover` to `true` (reset to false after test).
 - das-mirror
 
 **Phase 3: Run Validation Checks**
+
+**Phase 4: Teardown**
+Tear down compose cluster
+In `scripts/config.ts`, set:
+  - `enable-eigenda-failover` to `false`
 
 ### Scenario 3 - EigenDA with Validation Enabled & TokenBridge Enabled
 
@@ -141,3 +155,6 @@ Set `enable-eigenda-failover` to `true` (reset to false after test).
 - validation_node
 
 **Phase 3: Run Validation Checks**
+
+**Phase 4: Teardown**
+Tear down compose cluster
