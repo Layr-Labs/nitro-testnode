@@ -29,6 +29,10 @@ Testing Analysis:
     - Test case 1: Observed batch posting logs with expected parameters. No errors found.
 ```
 
+These tests can take place on two rollup domains:
+- Layer 2 that settles to Ethereum
+- Layer 3 that settles to Layer 2 Orbit chain
+
 ## How to test
 
 Generate a `session_timestamp` for this test execution and store it in your context using the current date/time:
@@ -139,6 +143,17 @@ Tear down compose cluster
 In `scripts/config.ts`, set:
   - `enable-eigenda-failover` to `false`
 
+
+### Scenario 3 - EigenDA with Validation Enabled && 4844 Failover Enabled
+**Phase 0: Update Config**  
+Set `enable-eigenda-failover` to `true`
+
+**Phase 1: Spinup Cluster**
+```
+./test-node.bash --init --eigenda --validate --pos
+```
+
+
 ### Scenario 3 - EigenDA with Validation Enabled & TokenBridge Enabled
 
 **Phase 1: Spinup Cluster**
@@ -154,7 +169,35 @@ In `scripts/config.ts`, set:
 - geth
 - validation_node
 
+**Phase 3: Deposit ERC20 tokens**
+
 **Phase 3: Run Validation Checks**
+
+**Phase 4: Teardown**
+Tear down compose cluster
+
+### Scenario 4 - Layer2 using EigenDA with Validation Enabled && Layer3 using EigenDA wtih custom gas token
+
+**Phase 1: Spinup Cluster**
+```
+./test-node.bash --init --eigenda --validate --l3node --l3-fee-token 
+```
+
+**Phase 2: Check Docker Services**
+- eigenda_proxy
+- poster
+- sequencer
+- validator
+- geth
+- validation_node
+- (layer3) l3node
+
+**Phase 3: Deposit ERC20 tokens**
+
+**Phase 3: Run Validation Checks for Layer 2**
+
+After doing these checks, now validate the l3node logs. The l3node runs a batch poster, validator, & sequencer components all on the same instance. Do the
+same validation checks done before but now for these components.
 
 **Phase 4: Teardown**
 Tear down compose cluster
