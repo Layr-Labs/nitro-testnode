@@ -134,7 +134,24 @@ Set `enable-eigenda-failover` to `true`
 
 **Phase 3: Run Validation Checks**
 
-**Phase 4: Teardown**
+**Phase 4: Trigger Failover Condition**
+A failover can be triggered by updating the memconfig used by `eigenda_proxy`'s ephemeral memstore instance.
+```
+curl -X PATCH http://localhost:4242/memstore/config -d '{"PutReturnsFailoverError": true}'
+```
+
+**Phase 5: Run Validation Checks Again**
+
+
+**Phase 6: Trigger EigenDA Back Online**
+A healthy EigenDA can be triggered by updating the memconfig used by `eigenda_proxy`'s ephemeral memstore instance.
+```
+curl -X PATCH http://localhost:4242/memstore/config -d '{"PutReturnsFailoverError": false}'
+```
+
+**Phase 7: Run Validation Checks Again**
+
+**Phase 8: Teardown**
 Tear down compose cluster
 In `scripts/config.ts`, set:
   - `enable-eigenda-failover` to `false`
