@@ -161,16 +161,6 @@ In `scripts/config.ts`, set:
   - `enable-eigenda-failover` to `false`
 
 
-### Scenario 3 - EigenDA with Validation Enabled && 4844 Failover Enabled
-**Phase 0: Update Config**  
-Set `enable-eigenda-failover` to `true`
-
-**Phase 1: Spinup Cluster**
-```
-./test-node.bash --init --eigenda --validate --pos
-```
-
-
 ### Scenario 3 - EigenDA with Validation Enabled & TokenBridge Enabled
 
 **Phase 1: Spinup Cluster**
