@@ -2,7 +2,7 @@
 
 set -eu
 
-NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro-eigenda:eigenda-v3.2.1-linux-amd64
+NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro/nitro-node@v3.5.6
 BLOCKSCOUT_VERSION=offchainlabs/blockscout:v1.0.0-c8db5b1
 
 # This commit matches the v1.2.1 contracts, with additional support for CacheManger deployment.
@@ -323,11 +323,12 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+NODES="sequencer"
+INITIAL_SEQ_NODES="sequencer"
+
 if $eigenda; then
     NODES="eigenda_proxy"
 fi
-NODES="sequencer"
-INITIAL_SEQ_NODES="sequencer"
 
 if ! $simple; then
     NODES="$NODES redis"
