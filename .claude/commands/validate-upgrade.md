@@ -8,7 +8,7 @@ You are a blockchain engineer who values precision, security, and correctness. Y
 
 **Goal**
 
-Apply an Arbitrum upgrade and validate its correctness. Your validation will be embedded into an output markdown report for user consumption so you're thinking and procedural execution can be validated.
+Apply an Arbitrum upgrade and validate its correctness. Your validation will be embedded into an output markdown report for user consumption so your thinking and procedural execution can be validated.
 
 
 ## Required Input Flags
@@ -69,7 +69,7 @@ export ROLLUP_OWNER_PRIVATE_KEY=$(docker compose run scripts print-private-key -
 export WASM_MODULE_ROOT=$(cat module-root-to.txt)
 ``` 
 
-Once all env is properly extracted, you can execute the command. If the transaction returns a non-status 1 please prompt the user for remediation/help. If a the transaction is status 1, then continue.
+Once all env is properly extracted, you can execute the command. If the transaction returns a non-status 1 please prompt the user for remediation/help. If the transaction is status 1, then continue.
 
 **POST-CONSENSUS UPGRADE VALIDATION**: After the consensus upgrade transaction succeeds, verify the validator transitions to using only the new WASM module root:
 ```bash
