@@ -2,7 +2,7 @@
 
 set -eu
 
-NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro/nitro-node:v3.5.6
+NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro/nitro-node:v3.5.7
 BLOCKSCOUT_VERSION=offchainlabs/blockscout:v1.0.0-c8db5b1
 
 # This commit matches the v1.2.1 contracts, with additional support for CacheManger deployment.
@@ -387,7 +387,7 @@ if $dev_blockscout && $build_dev_blockscout; then
 fi
 
 if $build_utils; then
-  LOCAL_BUILD_NODES="scripts rollupcreator boldupgrader"
+  LOCAL_BUILD_NODES="scripts rollupcreator"
   # always build tokenbridge in CI mode to avoid caching issues
   if $tokenbridge || $l3_token_bridge || $ci; then
     LOCAL_BUILD_NODES="$LOCAL_BUILD_NODES tokenbridge"
