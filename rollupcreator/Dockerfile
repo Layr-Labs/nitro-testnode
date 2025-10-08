@@ -4,11 +4,11 @@ RUN apt-get update && \
 ARG NITRO_CONTRACTS_BRANCH=main
 WORKDIR /workspace  
 RUN git clone --no-checkout https://github.com/Layr-Labs/nitro-contracts.git ./
-RUN git checkout 85aa27d11776bcbadf7f09aebdf71562bcb76e51
+RUN git checkout eigenda-v2.1.3
 RUN yarn install && yarn cache clean
 RUN curl -L https://foundry.paradigm.xyz | bash
 ENV PATH="${PATH}:/root/.foundry/bin"
-RUN foundryup
+RUN foundryup --install 1.0.0
 
 # Setup scripts and dependencies
 RUN touch scripts/config.ts
