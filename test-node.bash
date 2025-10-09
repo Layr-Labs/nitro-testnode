@@ -3,14 +3,13 @@
 set -eu
 
 NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro/nitro-node:v3.7.4
-BLOCKSCOUT_VERSION=offchainlabs/blockscout:v1.0.0-c8db5b1
+BLOCKSCOUT_VERSION=offchainlabs/blockscout:v1.1.0-0e716c8
 
 # This commit matches the v1.2.1 contracts, with additional support for CacheManger deployment.
 # Once v1.2.2 is released, we can switch to that version.
 DEFAULT_NITRO_CONTRACTS_VERSION="355d8719d7e85b568f7252df3ed46aa2e907a052"
 DEFAULT_TOKEN_BRIDGE_VERSION="v1.2.2"
 DEFAULT_BOLD_CONTRACTS_VERSION="31fd97e277658b3706c6e4ec8bf31ca4a8af2619"
-
 
 # Set default versions if not overriden by provided env vars
 : ${NITRO_CONTRACTS_BRANCH:=$DEFAULT_NITRO_CONTRACTS_VERSION}
@@ -53,6 +52,7 @@ consensusclient=false
 boldupgrade=false
 redundantsequencers=0
 l3_custom_fee_token=false
+l3_custom_fee_token_pricer=false
 l3_token_bridge=false
 l3_custom_fee_token_decimals=18
 batchposters=1
@@ -62,10 +62,12 @@ simple=true
 eigenda=false
 monitor=false
 l2anytrust=false
+l2timeboost=false
 
 # Use the dev versions of nitro/blockscout
 dev_nitro=false
 dev_blockscout=false
+dev_contracts=false
 
 # Rebuild docker images
 build_dev_nitro=false
@@ -119,6 +121,9 @@ while [[ $# -gt 0 ]]; do
                 done
             fi
             ;;
+        --dev-contracts)
+            dev_contracts=true
+            ;;
         --ci)
             ci=true
             shift
@@ -163,6 +168,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         --force-build-utils)
             force_build_utils=true
+            build_utils=true
             shift
             ;;
         --validate)
@@ -229,6 +235,14 @@ while [[ $# -gt 0 ]]; do
             l3_custom_fee_token=true
             shift
             ;;
+        --l3-fee-token-pricer)
+            if ! $l3_custom_fee_token; then
+                echo "Error: --l3-fee-token-pricer requires --l3-fee-token to be provided."
+                exit 1
+            fi
+            l3_custom_fee_token_pricer=true
+            shift
+            ;;
         --l3-fee-token-decimals)
             if ! $l3_custom_fee_token; then
                 echo "Error: --l3-fee-token-decimals requires --l3-fee-token to be provided."
@@ -252,6 +266,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --l2-anytrust)
             l2anytrust=true
+            shift
+            ;;
+        --l2-timeboost)
+            l2timeboost=true
             shift
             ;;
         --redundantsequencers)
@@ -291,6 +309,7 @@ while [[ $# -gt 0 ]]; do
             echo --build           rebuild docker images
             echo --no-build        don\'t rebuild docker images
             echo --dev             build nitro and blockscout dockers from source instead of pulling them. Disables simple mode
+            echo --dev-contracts   build scripts with local development version of contracts
             echo --init            remove all data, rebuild, deploy new rollup
             echo --pos             l1 is a proof-of-stake chain \(using prysm for consensus\)
             echo --validate        heavy computation, validating all blocks in WASM
@@ -299,6 +318,7 @@ while [[ $# -gt 0 ]]; do
             echo --l3-fee-token-decimals Number of decimals to use for custom fee token. Only valid if also '--l3-fee-token' is provided
             echo --l3-token-bridge Deploy L2-L3 token bridge. Only valid if also '--l3node' is provided
             echo --l2-anytrust     run the L2 as an AnyTrust chain
+            echo --l2-timeboost    run the L2 with Timeboost enabled, including auctioneer and bid validator
             echo --batchposters    batch posters [0-3]
             echo --redundantsequencers redundant sequencers [0-3]
             echo --detach          detach from nodes after running them
@@ -327,7 +347,7 @@ NODES="sequencer"
 INITIAL_SEQ_NODES="sequencer"
 
 if $eigenda; then
-    NODES="eigenda_proxy"
+    NODES="$NODES eigenda_proxy"
 fi
 
 if ! $simple; then
@@ -367,6 +387,14 @@ if $blockscout; then
     NODES="$NODES blockscout"
 fi
 
+if $monitor; then
+    NODES="$NODES prometheus grafana loki promtail"
+fi
+
+if $l2timeboost; then
+    NODES="$NODES timeboost-auctioneer timeboost-bid-validator"
+fi
+
 if $dev_nitro && $build_dev_nitro; then
   echo == Building Nitro
   if ! [ -n "${NITRO_SRC+set}" ]; then
@@ -393,17 +421,17 @@ if $build_utils; then
     LOCAL_BUILD_NODES="$LOCAL_BUILD_NODES tokenbridge"
   fi
 
-  if [ "$ci" == true ]; then
-    # workaround to cache docker layers and keep using docker-compose in CI
-    docker buildx bake --file docker-compose.yaml --file docker-compose-ci-cache.json $LOCAL_BUILD_NODES
-  else
+#   if [ "$ci" == true ]; then
+#     # workaround to cache docker layers and keep using docker-compose in CI
+#     docker buildx bake --allow=fs=/tmp --file docker-compose.yaml --file docker-compose-ci-cache.json $LOCAL_BUILD_NODES
+#   else
     UTILS_NOCACHE=""
     if $force_build_utils; then
       UTILS_NOCACHE="--no-cache"
     fi
     docker compose build --no-rm $UTILS_NOCACHE $LOCAL_BUILD_NODES
   fi
-fi
+# fi
 
 if $dev_nitro; then
   docker tag nitro-node-dev:latest nitro-node-dev-testnode
@@ -483,10 +511,10 @@ if $force_init; then
 
     if $l2anytrust; then
         echo "== Writing l2 chain config (anytrust enabled)"
-        docker compose run scripts --l2owner $l2ownerAddress  write-l2-chain-config --anytrust --eigenda $eigenda
+        docker compose run scripts --l2owner $l2ownerAddress  write-l2-chain-config --anytrust  --eigenda $eigenda
     else
         echo == Writing l2 chain config
-        docker compose run scripts --l2owner $l2ownerAddress  write-l2-chain-config --eigenda $eigenda
+        docker compose run scripts --l2owner $l2ownerAddress  write-l2-chain-config  --eigenda $eigenda
     fi
 
     sequenceraddress=`docker compose run scripts print-address --account sequencer | tail -n 1 | tr -d '\r\n'`
@@ -495,11 +523,16 @@ if $force_init; then
 
     echo == Deploying L2 chain
     docker compose run -e PARENT_CHAIN_RPC="http://geth:8545" -e DEPLOYER_PRIVKEY=$l2ownerKey -e PARENT_CHAIN_ID=$l1chainid -e CHILD_CHAIN_NAME="arb-dev-test" -e MAX_DATA_SIZE=117964 -e OWNER_ADDRESS=$l2ownerAddress -e WASM_MODULE_ROOT=$wasmroot -e SEQUENCER_ADDRESS=$sequenceraddress -e AUTHORIZE_VALIDATORS=10 -e CHILD_CHAIN_CONFIG_PATH="/config/l2_chain_config.json" -e CHAIN_DEPLOYMENT_INFO="/config/deployment.json" -e CHILD_CHAIN_INFO="/config/deployed_chain_info.json" rollupcreator create-rollup-testnode
-    docker compose run --entrypoint sh rollupcreator -c "jq [.[]] /config/deployed_chain_info.json > /config/l2_chain_info.json"
+    if $l2timeboost; then
+        docker compose run --entrypoint sh rollupcreator -c 'jq ".[] | .\"track-block-metadata-from\"=1 | [.]" /config/deployed_chain_info.json > /config/l2_chain_info.json'
+    else
+        docker compose run --entrypoint sh rollupcreator -c "jq [.[]] /config/deployed_chain_info.json > /config/l2_chain_info.json"
+    fi
 
 fi # $force_init
 
 anytrustNodeConfigLine=""
+timeboostNodeConfigLine=""
 
 # Remaining init may require AnyTrust committee/mirrors to have been started
 if $l2anytrust; then
@@ -529,12 +562,15 @@ if $l2anytrust; then
 fi
 
 if $force_init; then
+    if $l2timeboost; then
+        timeboostNodeConfigLine="--timeboost"
+    fi
     if $simple; then
         echo == Writing configs
-        docker compose run scripts write-config --simple $anytrustNodeConfigLine --eigenda $eigenda
+        docker compose run scripts write-config --simple $anytrustNodeConfigLine $timeboostNodeConfigLine --eigenda $eigenda
     else
         echo == Writing configs
-        docker compose run scripts write-config $anytrustNodeConfigLine --eigenda $eigenda
+        docker compose run scripts write-config $anytrustNodeConfigLine $timeboostNodeConfigLine --eigenda $eigenda
 
         echo == Initializing redis
         docker compose up --wait redis
@@ -548,6 +584,26 @@ if $force_init; then
     docker compose run scripts send-l2 --ethamount 100 --to l2owner --wait
     rollupAddress=`docker compose run --entrypoint sh poster -c "jq -r '.[0].rollup.rollup' /config/deployed_chain_info.json | tail -n 1 | tr -d '\r\n'"`
 
+    if $l2timeboost; then
+        docker compose run scripts send-l2 --ethamount 100 --to auctioneer --wait
+        biddingTokenAddress=`docker compose run scripts create-erc20 --deployer auctioneer | tail -n 1 | awk '{ print $NF }'`
+        auctionContractAddress=`docker compose run scripts deploy-express-lane-auction --bidding-token $biddingTokenAddress | tail -n 1 | awk '{ print $NF }'`
+        auctioneerAddress=`docker compose run scripts print-address --account auctioneer | tail -n1 | tr -d '\r\n'`
+        echo == Starting up Timeboost auctioneer and bid validator.
+        echo == Bidding token: $biddingTokenAddress, auction contract $auctionContractAddress
+        docker compose run scripts write-timeboost-configs --auction-contract $auctionContractAddress
+        docker compose run --user root --entrypoint sh timeboost-auctioneer -c "chown -R 1000:1000 /data"
+
+        echo == Funding alice and bob user accounts for timeboost testing
+        docker compose run scripts send-l2 --ethamount 10 --to user_alice --wait
+        docker compose run scripts send-l2 --ethamount 10 --to user_bob --wait
+        docker compose run scripts transfer-erc20 --token $biddingTokenAddress --amount 10000 --from auctioneer --to user_alice
+        docker compose run scripts transfer-erc20 --token $biddingTokenAddress --amount 10000 --from auctioneer --to user_bob
+
+        docker compose run --entrypoint sh scripts -c "sed -i 's/\(\"execution\":{\"sequencer\":{\"enable\":true,\"dangerous\":{\"timeboost\":{\"enable\":\)false/\1true,\"auction-contract-address\":\"$auctionContractAddress\",\"auctioneer-address\":\"$auctioneerAddress\"/' /config/sequencer_config.json" --wait
+        docker compose restart $INITIAL_SEQ_NODES
+    fi
+
     if $tokenbridge; then
         echo == Deploying L1-L2 token bridge
         sleep 10 # no idea why this sleep is needed but without it the deploy fails randomly
@@ -559,21 +615,22 @@ if $force_init; then
     echo == Deploy CacheManager on L2
     docker compose run -e CHILD_CHAIN_RPC="http://sequencer:8547" -e CHAIN_OWNER_PRIVKEY=$l2ownerKey rollupcreator deploy-cachemanager-testnode
 
-    if $boldupgrade; then
-        echo == Deploying WETH as BOLD stake token
-        stakeTokenAddress=`docker compose run scripts create-weth --deployer l2owner --deposit 100 | tail -n 1 | awk '{ print $NF }'`
-        echo BOLD stake token address: $stakeTokenAddress
-        docker compose run scripts transfer-erc20 --token $stakeTokenAddress --l1 --amount 100 --from l2owner --to validator
-        echo == Preparing BOLD upgrade
-        docker compose run -e TESTNODE_MODE=true -e ROLLUP_ADDRESS=$rollupAddress -e STAKE_TOKEN=$stakeTokenAddress boldupgrader script:bold-prepare
-        # retry this 10 times because the staker might not have made a node yet
-        for i in {1..10}; do
-            docker compose run -e TESTNODE_MODE=true -e ROLLUP_ADDRESS=$rollupAddress -e STAKE_TOKEN=$stakeTokenAddress boldupgrader script:bold-populate-lookup && break || true
-            echo "Failed to populate lookup table, retrying..."
-            sleep 10
-        done
-        docker compose run -e TESTNODE_MODE=true -e ROLLUP_ADDRESS=$rollupAddress -e STAKE_TOKEN=$stakeTokenAddress boldupgrader script:bold-local-execute
-    fi
+    # NOTE: Disabling script due to high bug frequency and limited correctness guarantees 
+    # if $boldupgrade; then
+    #     echo == Deploying WETH as BOLD stake token
+    #     stakeTokenAddress=`docker compose run scripts create-weth --deployer l2owner --deposit 100 | tail -n 1 | awk '{ print $NF }'`
+    #     echo BOLD stake token address: $stakeTokenAddress
+    #     docker compose run scripts transfer-erc20 --token $stakeTokenAddress --l1 --amount 100 --from l2owner --to validator
+    #     echo == Preparing BOLD upgrade
+    #     docker compose run -e TESTNODE_MODE=true -e ROLLUP_ADDRESS=$rollupAddress -e STAKE_TOKEN=$stakeTokenAddress boldupgrader script:bold-prepare
+    #     # retry this 10 times because the staker might not have made a node yet
+    #     for i in {1..10}; do
+    #         docker compose run -e TESTNODE_MODE=true -e ROLLUP_ADDRESS=$rollupAddress -e STAKE_TOKEN=$stakeTokenAddress boldupgrader script:bold-populate-lookup && break || true
+    #         echo "Failed to populate lookup table, retrying..."
+    #         sleep 10
+    #     done
+    #     docker compose run -e TESTNODE_MODE=true -e ROLLUP_ADDRESS=$rollupAddress -e STAKE_TOKEN=$stakeTokenAddress boldupgrader script:bold-local-execute
+    # fi
 
     if $l3node; then
         echo == Funding l3 users
@@ -604,6 +661,11 @@ if $force_init; then
             docker compose run scripts transfer-erc20 --token $nativeTokenAddress --amount 10000 --from user_fee_token_deployer --to l3owner
             docker compose run scripts transfer-erc20 --token $nativeTokenAddress --amount 10000 --from user_fee_token_deployer --to user_token_bridge_deployer
             EXTRA_L3_DEPLOY_FLAG="-e FEE_TOKEN_ADDRESS=$nativeTokenAddress"
+            if $l3_custom_fee_token_pricer; then
+                echo == Deploying custom fee token pricer
+                feeTokenPricerAddress=`docker compose run scripts create-fee-token-pricer --deployer user_fee_token_deployer | tail -n 1 | awk '{ print $NF }'`
+                EXTRA_L3_DEPLOY_FLAG="$EXTRA_L3_DEPLOY_FLAG -e FEE_TOKEN_PRICER_ADDRESS=$feeTokenPricerAddress"
+            fi
         fi
 
         echo == Deploying L3
