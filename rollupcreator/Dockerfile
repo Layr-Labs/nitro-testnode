@@ -1,7 +1,7 @@
-FROM node:18-bullseye-slim
+FROM node:20-bookworm-slim
 RUN apt-get update && \
     apt-get install -y git docker.io python3 make gcc g++ curl jq
-ARG NITRO_CONTRACTS_BRANCH=main
+ARG NITRO_CONTRACTS_BRANCH=eigenda-v2.1.3
 WORKDIR /workspace  
 RUN git clone --no-checkout https://github.com/Layr-Labs/nitro-contracts.git ./
 RUN git checkout eigenda-v2.1.3
@@ -13,6 +13,4 @@ RUN foundryup --install 1.0.0
 # Setup scripts and dependencies
 RUN touch scripts/config.ts
 RUN yarn build:all
-
-
 ENTRYPOINT ["yarn"]
