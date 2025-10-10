@@ -2,10 +2,10 @@
   "target": {
     "scripts": {
       "cache-from": [
-        "type=local,src=/tmp/.buildx-cache"
+        "type=local,src=/tmp/.buildx-cache-eigenda"
       ],
       "cache-to": [
-        "type=local,dest=/tmp/.buildx-cache,mode=max"
+        "type=local,dest=/tmp/.buildx-cache-eigenda,mode=max"
       ],
       "output": [
         "type=docker"
@@ -13,10 +13,10 @@
     },
     "rollupcreator": {
       "cache-from": [
-        "type=local,src=/tmp/.buildx-cache"
+        "type=local,src=/tmp/.buildx-cache-eigenda"
       ],
       "cache-to": [
-        "type=local,dest=/tmp/.buildx-cache,mode=max"
+        "type=local,dest=/tmp/.buildx-cache-eigenda,mode=max"
       ],
       "output": [
         "type=docker"
@@ -24,10 +24,10 @@
     },
     "boldupgrader": {
       "cache-from": [
-        "type=local,src=/tmp/.buildx-cache"
+        "type=local,src=/tmp/.buildx-cache-eigenda"
       ],
       "cache-to": [
-        "type=local,dest=/tmp/.buildx-cache,mode=max"
+        "type=local,dest=/tmp/.buildx-cache-eigenda,mode=max"
       ],
       "output": [
         "type=docker"
@@ -35,10 +35,10 @@
     },
     "tokenbridge": {
       "cache-from": [
-        "type=local,src=/tmp/.buildx-cache"
+        "type=local,src=/tmp/.buildx-cache-eigenda"
       ],
       "cache-to": [
-        "type=local,dest=/tmp/.buildx-cache,mode=max"
+        "type=local,dest=/tmp/.buildx-cache-eigenda,mode=max"
       ],
       "output": [
         "type=docker"
