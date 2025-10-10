@@ -2,14 +2,14 @@
 
 set -eu
 
-NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro/nitro-node-dev:ethenotethan--update-eigenda-version
+NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro/nitro-node:v3.6.4
 BLOCKSCOUT_VERSION=offchainlabs/blockscout:v1.1.0-0e716c8
 
-DEFAULT_NITRO_CONTRACTS_VERSION="eigenda-v3.1.0"
+# This commit matches the v1.2.1 contracts, with additional support for CacheManger deployment.
+# Once v1.2.2 is released, we can switch to that version.
+DEFAULT_NITRO_CONTRACTS_VERSION="355d8719d7e85b568f7252df3ed46aa2e907a052"
 DEFAULT_TOKEN_BRIDGE_VERSION="v1.2.2"
-
-# The is the latest bold-merge commit in nitro-contracts at the time
-DEFAULT_BOLD_CONTRACTS_VERSION="42d80e40"
+DEFAULT_BOLD_CONTRACTS_VERSION="31fd97e277658b3706c6e4ec8bf31ca4a8af2619"
 
 # Set default versions if not overriden by provided env vars
 : ${NITRO_CONTRACTS_BRANCH:=$DEFAULT_NITRO_CONTRACTS_VERSION}
@@ -59,6 +59,8 @@ batchposters=1
 devprivkey=b6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659
 l1chainid=1337
 simple=true
+eigenda=false
+monitor=false
 l2anytrust=false
 l2timeboost=false
 
@@ -74,8 +76,6 @@ build_utils=false
 force_build_utils=false
 build_node_images=false
 
-eigenda=false
-monitor=false
 while [[ $# -gt 0 ]]; do
     case $1 in
         --init)
@@ -328,6 +328,8 @@ while [[ $# -gt 0 ]]; do
             echo --no-tokenbridge  don\'t build or launch tokenbridge
             echo --no-run          does not launch nodes \(useful with build or init\)
             echo --no-simple       run a full configuration with separate sequencer/batch-poster/validator/relayer
+            echo --eigenda         run using EigenDA for data availability
+            echo --monitor         start Prometheus, Loki, Promtail and Grafana server
             echo --build-dev-nitro     rebuild dev nitro docker image
             echo --no-build-dev-nitro  don\'t rebuild dev nitro docker image
             echo --build-dev-blockscout     rebuild dev blockscout docker image
@@ -335,22 +337,18 @@ while [[ $# -gt 0 ]]; do
             echo --build-utils         rebuild scripts, rollupcreator, boldupgrader, token bridge docker images
             echo --no-build-utils      don\'t rebuild scripts, rollupcreator, boldupgrader, token bridge docker images
             echo --force-build-utils   force rebuilding utils, useful if NITRO_CONTRACTS_ or TOKEN_BRIDGE_BRANCH changes
-            echo --eigenda         run using EigenDA for data availability
-            echo --monitor         start Prometheus, Loki, Promtail and Grafana server
             echo
             echo script runs inside a separate docker. For SCRIPT-ARGS, run $0 script --help
             exit 0
     esac
 done
 
-
 NODES="sequencer"
+INITIAL_SEQ_NODES="sequencer"
 
 if $eigenda; then
     NODES="$NODES eigenda_proxy"
 fi
-
-INITIAL_SEQ_NODES="sequencer"
 
 if ! $simple; then
     NODES="$NODES redis"
@@ -417,7 +415,7 @@ if $dev_blockscout && $build_dev_blockscout; then
 fi
 
 if $build_utils; then
-  LOCAL_BUILD_NODES="scripts rollupcreator boldupgrader"
+  LOCAL_BUILD_NODES="scripts rollupcreator"
   # always build tokenbridge in CI mode to avoid caching issues
   if $tokenbridge || $l3_token_bridge || $ci; then
     LOCAL_BUILD_NODES="$LOCAL_BUILD_NODES tokenbridge"

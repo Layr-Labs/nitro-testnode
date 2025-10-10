@@ -290,14 +290,12 @@ function writeConfigs(argv: any) {
             "vhosts": "*",
             "corsdomain": "*"
         },
-        "metrics": true,
     }
-
-    baseConfig.node["data-availability"]["sequencer-inbox-address"] = ethers.utils.hexlify(getChainInfo()[0]["rollup"]["sequencer-inbox"]);
 
     if (argv.eigenda) {
         baseConfig.node["eigen-da"].enable = true
     }
+    baseConfig.node["data-availability"]["sequencer-inbox-address"] = ethers.utils.hexlify(getChainInfo()[0]["rollup"]["sequencer-inbox"]);
 
     const baseConfJSON = JSON.stringify(baseConfig)
 
@@ -381,6 +379,7 @@ function writeConfigs(argv: any) {
             "addr": "",
         },
         "validation": {
+            "use-jit": true,
             "api-auth": true,
             "api-public": false,
         },
@@ -388,7 +387,6 @@ function writeConfigs(argv: any) {
             "jwtsecret": valJwtSecret,
             "addr": "0.0.0.0",
         },
-        "metrics": true,
     }))
     fs.writeFileSync(path.join(consts.configpath, "validation_node_config.json"), JSON.stringify(validationNodeConfig))
 }
@@ -417,7 +415,7 @@ function writeL2ChainConfig(argv: any) {
             "EnableArbOS": true,
             "AllowDebugPrecompiles": true,
             "DataAvailabilityCommittee": argv.anytrust,
-            "InitialArbOSVersion": 32, // TODO For Timeboost, this still needs to be set to 31
+            "InitialArbOSVersion": 40,
             "EigenDA": false,
             "InitialChainOwner": argv.l2owner,
             "GenesisBlockNum": 0
@@ -456,7 +454,7 @@ function writeL3ChainConfig(argv: any) {
             "EnableArbOS": true,
             "AllowDebugPrecompiles": true,
             "DataAvailabilityCommittee": false,
-            "InitialArbOSVersion": 32,
+            "InitialArbOSVersion": 40,
             "InitialChainOwner": argv.l2owner,
             "EigenDA": false,
             "GenesisBlockNum": 0
@@ -671,15 +669,15 @@ export const writeL2ChainConfigCommand = {
     command: "write-l2-chain-config",
     describe: "writes l2 chain config file",
     builder: {
-        anytrust: {
-            boolean: true,
-            describe: "enable anytrust in chainconfig",
-            default: false
-        },
         eigenda:{
             boolean: true,
             default: false,
             describe: "config with EigenDA enabled",
+        },
+        anytrust: {
+            boolean: true,
+            describe: "enable anytrust in chainconfig",
+            default: false
         },
     },
     handler: (argv: any) => {
