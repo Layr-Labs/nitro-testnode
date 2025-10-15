@@ -2,7 +2,7 @@
 
 set -eu
 
-NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro/nitro-node:v3.6.4
+NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro/nitro-node:v3.7.4
 BLOCKSCOUT_VERSION=offchainlabs/blockscout:v1.1.0-0e716c8
 
 # This commit matches the v1.2.1 contracts, with additional support for CacheManger deployment.
@@ -579,6 +579,7 @@ if $force_init; then
 
     echo == Funding l2 funnel and dev key
     docker compose up --wait $INITIAL_SEQ_NODES
+    sleep 20s
     docker compose run scripts bridge-funds --ethamount 100000 --wait
     docker compose run scripts send-l2 --ethamount 100 --to l2owner --wait
     rollupAddress=`docker compose run --entrypoint sh poster -c "jq -r '.[0].rollup.rollup' /config/deployed_chain_info.json | tail -n 1 | tr -d '\r\n'"`
