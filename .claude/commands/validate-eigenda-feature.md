@@ -259,26 +259,16 @@ Tear down compose cluster
 
 ### Scenario 5 - EigenDA with Validation Enabled & Timeboost Express Lane
 
-**IMPORTANT SETUP NOTES**:
-The v3.7.4 pre-built container (`ghcr.io/layr-labs/nitro/nitro-node:v3.7.4`) has **incomplete timeboost configuration schema support**. To run this scenario successfully, you MUST build from the local Layr-Labs nitro source using the `--dev nitro` flag.
-
-**Prerequisites:**
-- Ensure the parent directory (`../nitro/`) contains the Layr-Labs nitro repository at v3.7.4 or later
-- The source must contain both EigenDA and timeboost implementations
-- Configuration fixes have been applied to `scripts/config.ts` and `test-node.bash`
-
 **Phase 0: Update Config**
 In `scripts/config.ts`, ensure:
   - `enable-eigenda-failover` is set to `false`
   - Timeboost config uses correct path: `sequencerConfig.execution.sequencer.timeboost` (NOT `.dangerous.timeboost`)
   - Lines 334-339 should be uncommented and use the correct path
 
-**Phase 1: Spinup Cluster with Dev Build**
+**Phase 1: Spinup Cluster**
 ```
-./test-node.bash --init --dev nitro --eigenda --validate --l2-timeboost --build-utils
+./test-node.bash --init --eigenda --validate --l2-timeboost --build-utils
 ```
-
-**Note:** The `--dev nitro` flag builds nitro-node from the local source directory, which includes complete timeboost configuration schema support.
 
 **Phase 2: Check Docker Services**
 - eigenda_proxy
