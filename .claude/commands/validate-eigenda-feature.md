@@ -163,9 +163,13 @@ In `scripts/config.ts`, set:
 
 ### Scenario 3 - EigenDA with Validation Enabled & TokenBridge Enabled
 
+**Phase 0: Update Config**
+In `scripts/config.ts`, set:
+  - `enable-eigenda-failover` to `false`
+
 **Phase 1: Spinup Cluster**
 ```
-./test-node.bash --init --eigenda --validate --tokenbridge
+./test-node.bash --init --eigenda --validate --tokenbridge --build-utils
 ```
 
 **Phase 2: Check Docker Services**
@@ -176,11 +180,55 @@ In `scripts/config.ts`, set:
 - geth
 - validation_node
 
-**Phase 3: Deposit ERC20 tokens**
+**Phase 3: Create and Bridge ERC20 Token**
 
-**Phase 3: Run Validation Checks**
+Create a bridgeable ERC20 token that deploys to both L1 and L2:
+```
+docker compose run scripts create-erc20 --deployer l2owner --bridgeable
+```
 
-**Phase 4: Teardown**
+Expected output:
+```
+Contract deployed at L1 address: 0x...
+Contract deployed at L2 address: 0x...
+```
+
+Save the L2 token address for the next step.
+
+**Phase 4: Test ERC20 Token Transfer on L2**
+
+Transfer ERC20 tokens on L2 to verify the bridged token is operational:
+```
+docker compose run scripts transfer-erc20 --from l2owner --to user_alice --amount 1000 --token <L2_TOKEN_ADDRESS>
+```
+
+This command should complete successfully, confirming the TokenBridge ERC20 functionality.
+
+**Phase 5: Run Validation Checks**
+
+Run all standard validation checks (Test Cases 1-3) to ensure:
+- Batches containing TokenBridge activity are posted to EigenDA
+- Delayed messages from TokenBridge operations are processed
+- Validator successfully validates blocks with TokenBridge transactions
+
+Check for specific TokenBridge activity in logs:
+```bash
+# Check batch posting with TokenBridge delayed messages
+docker compose logs poster | grep "batch sent" | tail -5
+
+# Check for delayed messages from TokenBridge operations
+docker compose logs sequencer | grep "Added DelayedMessages" | tail -5
+
+# Verify validation succeeded for blocks with TokenBridge activity
+docker compose logs validator | grep "validated execution" | tail -5
+```
+
+Expected observations:
+- Batches show `eigenDA=true` with incrementing delayed message counters
+- Delayed messages increment from TokenBridge operations (token creation, transfers)
+- Validator logs show successful validation with consistent WasmRoots
+
+**Phase 6: Teardown**
 Tear down compose cluster
 
 ### Scenario 4 - Layer2 using EigenDA with Validation Enabled && Layer3 using EigenDA wtih custom gas token
