@@ -262,8 +262,7 @@ Tear down compose cluster
 **Phase 0: Update Config**
 In `scripts/config.ts`, ensure:
   - `enable-eigenda-failover` is set to `false`
-  - Timeboost config uses correct path: `sequencerConfig.execution.sequencer.timeboost` (NOT `.dangerous.timeboost`)
-  - Lines 334-339 should be uncommented and use the correct path
+  - Timeboost config is properly enabled at lines 334-339
 
 **Phase 1: Spinup Cluster**
 ```
@@ -288,26 +287,11 @@ Run all standard validation checks (Test Cases 1-3) to ensure:
 - Delayed messages are processed correctly
 - Validator successfully validates blocks
 
-**Phase 4: Verify Timeboost Configuration and Services**
+**Phase 4: Verify Timeboost Services**
 
-Verify that timeboost is properly configured and operational:
+Verify that timeboost is operational:
 
-1. Check sequencer timeboost configuration:
-```bash
-docker compose exec sequencer cat /config/sequencer_config.json | python3 -m json.tool | grep -A 10 timeboost
-```
-
-Expected output:
-```json
-"timeboost": {
-    "enable": true,
-    "auction-contract-address": "0x...",
-    "auctioneer-address": "0x...",
-    "redis-url": "redis://redis:6379"
-}
-```
-
-2. Check sequencer logs for timeboost express lane activity:
+1. Check sequencer logs for timeboost express lane activity:
 ```bash
 docker compose logs sequencer | grep -E "timeboost|express lane|EigenDA"
 ```
@@ -319,7 +303,7 @@ Expected observations:
 - `INFO Monitoring express lane auction contract via resolvedRounds`
 - `INFO New express lane auction round round=X timestamp=...`
 
-3. Verify timeboost-auctioneer service is functioning:
+2. Verify timeboost-auctioneer service is functioning:
 ```bash
 docker compose logs timeboost-auctioneer | tail -20
 ```
@@ -330,7 +314,7 @@ Expected observations:
 - Auctions running every 60 seconds
 - No errors or fatal crashes
 
-4. Send test transactions:
+3. Send test transactions:
 ```bash
 docker compose run scripts send-l2 --ethamount 5 --to user_alice --wait
 docker compose run scripts send-l2 --ethamount 5 --to user_bob --wait
@@ -362,7 +346,7 @@ Re-run Test Cases 1-3 to ensure continued stability:
 - Validation succeeding with consistent WasmRoots
 - No death loops or terminal errors
 
-Check validator logs for blocks containing timeboost transactions:
+Verify validator continues operating correctly:
 ```
 docker compose logs validator | grep "validated execution" | tail -10
 ```
