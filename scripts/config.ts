@@ -332,8 +332,7 @@ function writeConfigs(argv: any) {
         sequencerConfig.execution["sequencer"].enable = true
         sequencerConfig.node["delayed-sequencer"].enable = true
         if (argv.timeboost) {
-          sequencerConfig.execution.sequencer.dangerous = {};
-          sequencerConfig.execution.sequencer.dangerous.timeboost = {
+          sequencerConfig.execution.sequencer.timeboost = {
              "enable": false, // Create it false initially, turn it on with sed in test-node.bash after contract setup.
              "redis-url": argv.redisUrl
           };
@@ -601,8 +600,9 @@ function writeBidValidatorConfig(argv: any) {
     },
     "bid-validator": {
       "auction-contract-address": argv.auctionContract,
+      "auctioneer-address": namedAddress("auctioneer"),
       "redis-url": "redis://redis:6379",
-      "sequencer-endpoint": "http://sequencer:8547"
+      "rpc-endpoint": "http://sequencer:8547"
     }
   }
   const bidValidatorConfigJSON = JSON.stringify(bidValidatorConfig)
