@@ -514,7 +514,6 @@ services:
       # - EIGENDA_PROXY_EIGENDA_ETH_RPC=https://ethereum-holesky-rpc.publicnode.com
       # - EIGENDA_PROXY_EIGENDA_CONFIRMATION_DEPTH=0
       - EIGENDA_PROXY_METRICS_ADDR=0.0.0.0
-      # - EIGENDA_PROXY_METRICS_ENABLED=true
       - EIGENDA_PROXY_METRICS_PORT=7300
     ports:
       - 4242:4242
