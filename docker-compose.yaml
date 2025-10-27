@@ -496,10 +496,13 @@ services:
 
   eigenda_proxy:
     container_name: eigenda-proxy
-    image: ghcr.io/layr-labs/eigenda-proxy:v1.8.2
+    image: ghcr.io/layr-labs/eigenda-proxy:2.3.1
     environment:
       - EIGENDA_PROXY_ADDR=0.0.0.0
       - EIGENDA_PROXY_PORT=4242
+      - EIGENDA_PROXY_STORAGE_BACKENDS_TO_ENABLE=V1
+      - EIGENDA_PROXY_STORAGE_DISPERSAL_BACKEND=V1
+      - EIGENDA_PROXY_APIS_TO_ENABLE=standard,metrics
       - EIGENDA_PROXY_MEMSTORE_ENABLED=true
       ## Disable this when using real testnet
       - EIGENDA_PROXY_EIGENDA_CERT_VERIFICATION_DISABLED=true
@@ -511,7 +514,6 @@ services:
       # - EIGENDA_PROXY_EIGENDA_ETH_RPC=https://ethereum-holesky-rpc.publicnode.com
       # - EIGENDA_PROXY_EIGENDA_CONFIRMATION_DEPTH=0
       - EIGENDA_PROXY_METRICS_ADDR=0.0.0.0
-      - EIGENDA_PROXY_METRICS_ENABLED=true
       - EIGENDA_PROXY_METRICS_PORT=7300
     ports:
       - 4242:4242
