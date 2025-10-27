@@ -256,3 +256,107 @@ same validation checks done before but now for these components.
 
 **Phase 4: Teardown**
 Tear down compose cluster
+
+### Scenario 5 - EigenDA with Validation Enabled & Timeboost Express Lane
+
+**Phase 0: Update Config**
+In `scripts/config.ts`, ensure:
+  - `enable-eigenda-failover` is set to `false`
+  - Timeboost config is properly enabled at lines 334-339
+
+**Phase 1: Spinup Cluster**
+```
+./test-node.bash --init --eigenda --validate --l2-timeboost --build-utils
+```
+
+**Phase 2: Check Docker Services**
+- eigenda_proxy
+- poster
+- sequencer
+- validator
+- geth
+- validation_node
+- redis
+- timeboost-auctioneer
+- timeboost-bid-validator
+
+**Phase 3: Run Standard Validation Checks**
+
+Run all standard validation checks (Test Cases 1-3) to ensure:
+- Batches are posted to EigenDA with timeboost enabled
+- Delayed messages are processed correctly
+- Validator successfully validates blocks
+
+**Phase 4: Verify Timeboost Services**
+
+Verify that timeboost is operational:
+
+1. Check sequencer logs for timeboost express lane activity:
+```bash
+docker compose logs sequencer | grep -E "timeboost|express lane|EigenDA"
+```
+
+Expected observations:
+- `INFO EigenDA enabled failover=false anytrust=false`
+- `INFO Reading blob from EigenDA batchID=X`
+- `INFO Watching for new express lane rounds`
+- `INFO Monitoring express lane auction contract via resolvedRounds`
+- `INFO New express lane auction round round=X timestamp=...`
+
+2. Verify timeboost-auctioneer service is functioning:
+```bash
+docker compose logs timeboost-auctioneer | tail -20
+```
+
+Expected observations:
+- `INFO New auction closing time reached closingTime=... totalBids=0`
+- `INFO No bids received for auction resolution round=X` (expected when no bidders active)
+- Auctions running every 60 seconds
+- No errors or fatal crashes
+
+3. Send test transactions:
+```bash
+docker compose run scripts send-l2 --ethamount 5 --to user_alice --wait
+docker compose run scripts send-l2 --ethamount 5 --to user_bob --wait
+```
+
+Expected: Transactions process successfully through the timeboost-enabled sequencer
+
+**Phase 5: Verify EigenDA + Timeboost Integration**
+
+Check that batches containing timeboost transactions are properly posted to EigenDA:
+
+```bash
+# Check batch posting with timeboost enabled
+docker compose logs poster | grep "batch sent" | tail -10
+
+# Verify EigenDA dispersion
+docker compose logs poster | grep "Dispersing batch" | tail -5
+```
+
+Expected observations:
+- Batches show `eigenDA=true` indicating EigenDA is active
+- No errors dispersing batches to EigenDA with timeboost enabled
+- Batch sequence numbers incrementing correctly
+
+**Phase 6: Run Final Validation Checks**
+
+Re-run Test Cases 1-3 to ensure continued stability:
+- Batch posting continues successfully with both EigenDA and timeboost active
+- Validation succeeding with consistent WasmRoots
+- No death loops or terminal errors
+
+Verify validator continues operating correctly:
+```
+docker compose logs validator | grep "validated execution" | tail -10
+```
+
+Expected observations:
+- Validator successfully validates blocks with timeboost enabled
+- Consistent WasmRoots across validations
+- MessageCount and Batch numbers properly incrementing
+
+**Phase 7: Teardown**
+Tear down compose cluster
+In `scripts/config.ts`, set:
+  - `enable-eigenda-failover` back to `true` (if modified)
