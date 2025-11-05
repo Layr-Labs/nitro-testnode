@@ -437,7 +437,7 @@ if $dev_nitro; then
   docker tag nitro-node-dev:latest nitro-node-dev-testnode
 else
   docker pull $NITRO_NODE_VERSION
-  docker tag $NITRO_NODE_VERSION nitro-node-dev-testnode 2>/dev/null || docker tag nitro-node-dev-testnode nitro-node-dev-testnode
+  docker tag $NITRO_NODE_VERSION nitro-node-dev-testnode
 fi
 
 if $blockscout; then
