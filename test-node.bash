@@ -2,7 +2,7 @@
 
 set -eu
 
-NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro/nitro-node:v3.8.0-rc.12
+NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro/nitro-node:v3.8.0-rc.16
 BLOCKSCOUT_VERSION=offchainlabs/blockscout:v1.1.0-0e716c8
 
 # This commit matches the v1.2.1 contracts, with additional support for CacheManger deployment.
@@ -437,7 +437,7 @@ if $dev_nitro; then
   docker tag nitro-node-dev:latest nitro-node-dev-testnode
 else
   docker pull $NITRO_NODE_VERSION
-  docker tag $NITRO_NODE_VERSION nitro-node-dev-testnode
+  docker tag $NITRO_NODE_VERSION nitro-node-dev-testnode 2>/dev/null || docker tag nitro-node-dev-testnode nitro-node-dev-testnode
 fi
 
 if $blockscout; then
