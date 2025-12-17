@@ -2,7 +2,7 @@
 
 set -eu
 
-NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro/nitro-node:v3.8.0
+NITRO_NODE_VERSION=ghcr.io/layr-labs/nitro/nitro-node:v3.9.0
 BLOCKSCOUT_VERSION=offchainlabs/blockscout:v1.1.0-0e716c8
 
 # This commit matches the v1.2.1 contracts, with additional support for CacheManger deployment.
